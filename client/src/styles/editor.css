@@ -1,0 +1,22 @@
+#project-structure-wrapper ul {
+	list-style: none;
+	margin: 0;
+}
+
+main {
+	display: flex;
+	flex-direction: row;
+}
+
+.editor-wrapper {
+	flex: 1 1 0;
+	background: pink;
+}
+
+#current-editors-wrapper {
+	padding: 1em;
+}
+
+#current-editors-wrapper ul{
+	list-style: none;
+}

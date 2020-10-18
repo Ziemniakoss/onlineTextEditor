@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+	<link rel="stylesheet" href="styles/style.css">
+	<link rel="stylesheet" href="styles/editor.css">
+</head>
+<body>
+<main>
+	<div id="project-structure-wrapper">
+		<ul>
+			<li>Plik w root 2</li>
+			<li>
+				<details>
+					<summary>
+						<span>Folder 1</span>
+					</summary>
+					<ul>
+						<li>Plik 1</li>
+						<li>Plik 2</li>
+						<li>Plik 3</li>
+						<li>Plik 4</li>
+						<li>
+							<details>
+								<summary><span>Podfolder</span></summary>
+								<ul>
+									<li>Pod plik 1</li>
+									<li>Pod plik 2</li>
+									<li>Pod plik 3</li>
+								</ul>
+							</details>
+						</li>
+					</ul>
+				</details>
+			</li>
+			<li>Plik w root 1</li>
+			<li>Plik w root 2</li>
+		</ul>
+	</div>
+	<div id="editor-wrapper" class="editor-wrapper">
+		<h2>Tutaj nazwa edytowanego pliku</h2>
+		<div id="editor">
+			Tu będzie edytor tekstu
+		</div>
+	</div>
+	<div id="current-editors-wrapper">
+		<h4>Currnent Editors</h4>
+		<ul id="editors-list">
+			<li>User 1</li>
+			<li>User 2</li>
+			<li>User 3</li>
+			<li>User 4</li>
+		</ul>
+	</div>
+</main>
+</body>
+</html>

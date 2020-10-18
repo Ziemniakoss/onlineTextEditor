@@ -1,0 +1,15 @@
+thead tr{
+	background: #5c5c5c ;
+}
+tbody tr:hover{
+	opacity: 1;
+	background: #343434;
+}
+
+tbody td{
+	padding:  0.5em 1em;
+}
+
+thead th{
+	padding: 0.6em 1.2em;
+}
