@@ -10,7 +10,10 @@ main {
 
 .editor-wrapper {
 	flex: 1 1 0;
-	background: pink;
+}
+
+#editor{
+	height: 800px;
 }
 
 #current-editors-wrapper {

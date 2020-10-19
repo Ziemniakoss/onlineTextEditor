@@ -1,0 +1,14 @@
+version: "3"
+services:
+  client:
+    build: "./client"
+    ports:
+      - "8080:80"
+  server:
+    build: "./server"
+    ports:
+      - "5000:500"
+  database:
+    build: "./database"
+    ports:
+      - "5432:5432"
