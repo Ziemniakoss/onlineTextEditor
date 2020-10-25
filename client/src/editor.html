@@ -8,56 +8,81 @@
 </head>
 <body>
 <main>
-<div class="content-wrapper">
-	<div id="option-panel">
-		<select id="theme-selector" accesskey="ctrl + t" >
-			<option value="ambiance">Ambiance</option>
-			<option value="chaos">Chaos</option>
-			<option value="chrome">Chrome</option>
-			<option value="clouds">Clouds</option>
-			<option value="clouds_midnight">Clouds Midnight</option>
-			<option value="cobalt">Cobalt</option>
-			<option value="crimson_editor">Crimson Editor</option>
-			<option value="dawn">Dawn</option>
-			<option value="dracula">Dracula</option>
-			<option value="dreamweaver">Dreamweaver</option>
-			<option value="eclipse">Eclipse</option>
-			<option value="github">Github</option>
-			<option value="gob">Gob</option>
-			<option value="gruvbox">Gruvbox</option>
-			<option value="idle_fingers">Idle Fingers</option>
-			<option value="iplastic">IPlastic</option>
-			<option value="katzenmilch">Katzenmilch</option>
-			<option value="kr_theme">Kr Theme</option>
-			<option value="kuroir">Kuroir</option>
-			<option value="merbivore">Merbivore</option>
-			<option value="merbivore_soft">Merbivore Soft</option>
-			<option value="mono_industrial">Mono Industrial</option>
-			<option value="monokai">Monokai</option>
-			<option value="nord_dark">Nord_dark</option>
-			<option value="pastel_on_dark">Pastel on Dark</option>
-			<option value="solarized_dark">Solarized Dark</option>
-			<option value="solarized_light">Solarized Light</option>
-			<option value="sqlserver">SQL Server</option>
-			<option value="terminal">Terminal</option>
-			<option value="textmate">Textmate</option>
-			<option value="tomorrow">Tomorrow</option>
-			<option value="tomorrow_night_blue">Tomorrow Night Blue</option>
-			<option value="tomorrow_night_bright">tomorrow Night Bright</option>
-			<option value="tomorrow_night_eighties">tomorrow Night Eighties</option>
-			<option value="tomorrow_night">Tomorrow Night</option>
-			<option value="twilight">Twilight</option>
-			<option value="vibrant_ink">Vibrant Ink</option>
-			<option value="xcode">XCode</option>
-		</select>
-	</div>
-	<div class="editor-wrapper">
-		<div id="project-structure">
-			Project structures
+	<div class="content-wrapper">
+		<div id="option-panel">
+			<select id="theme-selector">
+				<option value="ambiance">Ambiance</option>
+				<option value="chaos">Chaos</option>
+				<option value="chrome">Chrome</option>
+				<option value="clouds">Clouds</option>
+				<option value="clouds_midnight">Clouds Midnight</option>
+				<option value="cobalt">Cobalt</option>
+				<option value="crimson_editor">Crimson Editor</option>
+				<option value="dawn">Dawn</option>
+				<option value="dracula">Dracula</option>
+				<option value="dreamweaver">Dreamweaver</option>
+				<option value="eclipse">Eclipse</option>
+				<option value="github">Github</option>
+				<option value="gob">Gob</option>
+				<option value="gruvbox">Gruvbox</option>
+				<option value="idle_fingers">Idle Fingers</option>
+				<option value="iplastic">IPlastic</option>
+				<option value="katzenmilch">Katzenmilch</option>
+				<option value="kr_theme">Kr Theme</option>
+				<option value="kuroir">Kuroir</option>
+				<option value="merbivore">Merbivore</option>
+				<option value="merbivore_soft">Merbivore Soft</option>
+				<option value="mono_industrial">Mono Industrial</option>
+				<option value="monokai">Monokai</option>
+				<option value="nord_dark">Nord_dark</option>
+				<option value="pastel_on_dark">Pastel on Dark</option>
+				<option value="solarized_dark">Solarized Dark</option>
+				<option value="solarized_light">Solarized Light</option>
+				<option value="sqlserver">SQL Server</option>
+				<option value="terminal">Terminal</option>
+				<option value="textmate">Textmate</option>
+				<option value="tomorrow">Tomorrow</option>
+				<option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+				<option value="tomorrow_night_bright">tomorrow Night Bright</option>
+				<option value="tomorrow_night_eighties">tomorrow Night Eighties</option>
+				<option value="tomorrow_night">Tomorrow Night</option>
+				<option value="twilight">Twilight</option>
+				<option value="vibrant_ink">Vibrant Ink</option>
+				<option value="xcode">XCode</option>
+			</select>
 		</div>
-		<div id="editor"></div>
+		<div class="editor-wrapper">
+			<div id="project-structure">
+				<h3>Project name</h3>
+				<ul id="files-list">
+					<li>
+						<div>
+							<img src="img/file-icon.png" class="icon">
+							<span class="file-name-label">File one</span>
+							<span>
+								<button data-id="file-id" class="red-button">
+									<img src="img/trash-icon.png" class="icon">
+								</button>
+							</span>
+						</div>
+					</li>
+					<li>File 2</li>
+					<li>File 3</li>
+					<li>File 4</li>
+					<li>File 5</li>
+				</ul>
+			</div>
+			<div id="editor"></div>
+			<div id="editing-users">
+				<div>Users currently editing</div>
+				<ul id="users-list">
+					<li>You</li>
+					<li>You 1</li>
+					<li>You 2</li>
+				</ul>
+			</div>
+		</div>
 	</div>
-</div>
 </main>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="js/editor.js">
