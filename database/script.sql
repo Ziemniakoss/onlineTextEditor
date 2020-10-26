@@ -43,7 +43,7 @@ CREATE TABLE files_lines
  * - pobieranie danych o dostępnych projetach(nazwa, id, nazwa użytkownika, opis)
  */
 
-CREATE OR REPLACE FUNCTION create_user(_username CHAR, _password_plain CHAR) RETURNS INT
+CREATE OR REPLACE FUNCTION create_user(_username varchar, _password_plain varchar) RETURNS INT
 	language plpgsql AS
 $body$
 DECLARE
