@@ -35,7 +35,6 @@ CREATE TABLE files_lines
 	PRIMARY KEY (file_id, line_number)
 );
 
-
 /**
  * TODO Funkcje do:
  * - dodawania n nowych linii w dokumencie
