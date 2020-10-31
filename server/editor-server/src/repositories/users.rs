@@ -1,8 +1,5 @@
-use postgres::Client;
 use crate::repositories::get_client;
 use serde::Serialize;
-use futures::future::err;
-use std::fs::read;
 
 #[derive(Serialize)]
 pub struct User {

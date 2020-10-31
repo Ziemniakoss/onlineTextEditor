@@ -1,8 +1,5 @@
 use actix_web::body::Body;
-use actix_web::{get, post, delete, web, HttpRequest, HttpResponse, Result, App};
-use actix_web::http::{header, Method, StatusCode};
-use actix_web::{ guard, middleware, Error, HttpServer, Responder};
-use std::{env, io};
+use actix_web::{get, post, delete, web, HttpRequest, HttpResponse, Result};
 
 #[get("/projects")]
 pub async fn get_all_projects() -> Result<HttpResponse<Body>> {
@@ -22,5 +19,5 @@ pub async fn delete_project(web::Path(id): web::Path<u32>) -> Result<HttpRespons
 	if id == 10 {
 		return Ok(HttpResponse::Ok().body("aa"));
 	}
-	return  Ok(HttpResponse::NotFound().body("Project not found"));
+	return Ok(HttpResponse::NotFound().body("Project not found"));
 }
