@@ -9,7 +9,7 @@ use log::{error, info};
 
 
 #[post("/login")]
-pub async fn login(user_dto: web::Json<UserDto>, session: Session) -> Result<HttpResponse<Body>> {
+pub async fn login(user_dto: web::Json<UserAuthorizationDto>, session: Session) -> Result<HttpResponse<Body>> {
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
 	return match try_login(&user_dto.username, &user_dto.password) {
 		Ok(user) => {
@@ -39,7 +39,7 @@ pub async fn logout(session: Session) -> Result<HttpResponse<Body>> {
 }
 
 #[post("/register")]
-pub async fn register(user_dto: web::Json<UserDto>) -> Result<HttpResponse<Body>> {
+pub async fn register(user_dto: web::Json<UserAuthorizationDto>) -> Result<HttpResponse<Body>> {
 	println!("{:#?}", user_dto);
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
 	return match create_user(&user_dto.username, &user_dto.password) {
@@ -59,7 +59,7 @@ pub async fn register(user_dto: web::Json<UserDto>) -> Result<HttpResponse<Body>
 }
 
 #[derive(Debug, Deserialize)]
-struct UserDto {
-	username: String,
-	password: String,
+pub struct UserAuthorizationDto {
+	pub username: String,
+	pub password: String,
 }

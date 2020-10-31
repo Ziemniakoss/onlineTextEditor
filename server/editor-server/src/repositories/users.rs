@@ -1,5 +1,7 @@
 use crate::repositories::get_client;
 use serde::Serialize;
+use postgres::Row;
+use log::{error};
 
 #[derive(Serialize)]
 pub struct User {
@@ -40,4 +42,20 @@ pub fn login(username: &String, password: &String) -> Result<User, String> {
 			Err(String::from("Unknown server error"))
 		}
 	}
+}
+
+pub fn get_user(id: i32) -> Option<User> {
+	return match get_client().query_one("SELECT id, name FROM users WHERE id = $1", &[&id]) {
+		Ok(row) => {
+			Some(convert_to_user(&row))
+		}
+		Err(error) => {
+			error!("Error occured while fetching user by id {}: {}", id, error);
+			None
+		}
+	};
+}
+
+fn convert_to_user(row: &Row) -> User {
+	User { id: row.get(0), name: row.get(1) }
 }

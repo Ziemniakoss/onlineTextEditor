@@ -1,5 +1,6 @@
 use postgres::{Client, NoTls};
 use log::error;
+
 pub mod users;
 pub mod projects;
 pub mod files;
@@ -23,4 +24,9 @@ fn get_client() -> Client {
 			panic!(error)
 		}
 	}
+}
+
+pub struct DatabaseError {
+	pub error_code: i32,
+	pub message: String,
 }
