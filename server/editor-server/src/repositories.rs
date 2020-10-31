@@ -19,8 +19,7 @@ fn get_client() -> Client {
 	match client {
 		Ok(c) => return c,
 		Err(error) => {
-			error!("Ala ma kota");
-			println!("AAAAAAAAAAAAAAA {}", error);
+			error!("Error occured while trying to connect to postgres database: {}", error);
 			panic!(error)
 		}
 	}

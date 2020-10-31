@@ -38,9 +38,6 @@ pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session:
 				.body(Body::from("{\"message\":\"You have to be logged in to create projects\"}")));
 		}
 	}
-	if project_dto.name.len() == 0 {
-		return Ok(response_builder.status(StatusCode::BAD_REQUEST).body("{\"message\":\"Project must have name\"}"));
-	}
 	return match crate::repositories::projects::create_project(Project {
 		name: project_dto.name.clone(),
 		description: project_dto.description.clone(),
