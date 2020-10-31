@@ -82,10 +82,10 @@ $body$
 DECLARE
 	_id INT;
 BEGIN
-	IF NOT EXISTS(SELECT id FROM users WHERE id == _owner_id) THEN
+	IF NOT EXISTS(SELECT id FROM users WHERE id = _owner_id) THEN
 		RETURN -1;
 	end if;
-	IF _name IS NULL OR length(_name) == 0 THEN
+	IF _name IS NULL OR length(_name) = 0 THEN
 		RETURN -2;
 	END IF;
 	IF EXISTS(SELECT id FROM projects WHERE name = _name AND owner_id = _owner_id) THEN
@@ -144,7 +144,7 @@ BEGIN
     IF _name IS NULL OR length(_name) = 0 THEN
 		RETURN -1;
 	END IF;
-    IF length(_name) == 0 THEN
+    IF length(_name) = 0 THEN
 		RETURN -2;
 	END IF;
     IF NOT EXISTS(SELECT id FROM projects WHERE id = _project_id) THEN
