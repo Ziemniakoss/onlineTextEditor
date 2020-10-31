@@ -7,7 +7,7 @@ services:
   server:
     build: "./server"
     ports:
-      - "5000:500"
+      - "5000:5000"
   database:
     build: "./database"
     ports:

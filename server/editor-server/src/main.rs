@@ -7,7 +7,7 @@ use env_logger::Env;
 use time::Duration;
 
 const REDIS_ADDR: &str = "127.0.0.1:6379";
-const SERVER_ADDR: &str = "127.0.0.1:5000";
+const SERVER_ADDR: &str = "0.0.0.0:5000";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
