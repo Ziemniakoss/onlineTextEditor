@@ -5,14 +5,16 @@ use editor_server::controllers::users::{register, login, logout};
 use rand::Rng;
 use env_logger::Env;
 
+const REDIS_ADDR: &str = "127.0.0.1:6379";
+const SERVER_ADDR: &str = "127.0.0.1:5000";
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-	let addr = "127.0.0.1:5000";
-	println!("Starting server at {}", addr);
+	println!("Starting server at {}", SERVER_ADDR);
 	env_logger::from_env(Env::default().default_filter_or("info")).init();
 	HttpServer::new(|| {
 		App::new()
-			.wrap(RedisSession::new("127.0.0.1:6379", &rand::thread_rng().gen::<[u8; 32]>()).cookie_http_only(false).cookie_name("session"))
+			.wrap(RedisSession::new(REDIS_ADDR, &rand::thread_rng().gen::<[u8; 32]>()).cookie_http_only(false).cookie_name("session"))
 			.wrap(middleware::Logger::default())
 			.service(get_all_projects)
 			.service(delete_project)
@@ -21,7 +23,7 @@ async fn main() -> std::io::Result<()> {
 			.service(login)
 			.service(logout)
 	})
-		.bind(addr)?
+		.bind(SERVER_ADDR)?
 		.run()
 		.await
 }

@@ -4,19 +4,22 @@ use crate::repositories::users::{create_user, login as try_login};
 use actix_web::http::StatusCode;
 use serde::Deserialize;
 use actix_session::Session;
+use crate::session_manager::{get_user_id, set_user_id};
+use log::{error, info};
+
 
 #[post("/login")]
 pub async fn login(user_dto: web::Json<UserDto>, session: Session) -> Result<HttpResponse<Body>> {
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
 	return match try_login(&user_dto.username, &user_dto.password) {
 		Ok(user) => {
-			println!("User {} logged in", user.name);
-			session.set("user_id", user.id);
+			info!("User logged in: {}", user.name);
+			set_user_id(&session, user.id);
 			session.renew();
 			Ok(response_builder.body("hello"))
 		}
-		Err(e) => {
-			println!("{}", e);
+		Err(_) => {
+			info!("User tried to log in with incorrect password or login");//TODO ip bla bla bla
 			Ok(response_builder.status(StatusCode::UNAUTHORIZED).body("Invalid login"))
 		}
 	};
@@ -25,12 +28,13 @@ pub async fn login(user_dto: web::Json<UserDto>, session: Session) -> Result<Htt
 #[post("/logout")]
 pub async fn logout(session: Session) -> Result<HttpResponse<Body>> {
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
-	let id: Option<i32> = session.get("user_id")?;
-	return if let Some(_) = id {
-		session.purge();
-		Ok(response_builder.body("Logged out"))
-	} else {
-		Ok(response_builder.status(StatusCode::UNAUTHORIZED).body("Nu allowed"))
+	return match get_user_id(&session) {
+		Some(user_id) => {
+			session.purge();
+			info!("User with id {} logged out", user_id);
+			Ok(response_builder.body("Logged out"))
+		}
+		None => Ok(response_builder.status(StatusCode::UNAUTHORIZED).body("Nu allowed"))
 	};
 }
 
