@@ -8,6 +8,12 @@ services:
     build: "./server"
     ports:
       - "5000:5000"
+    environment:
+      ONLINE_EDITOR_DATABASE_HOST: "database"
+      ONLINE_EDITOR_DATABASE_DBNAME: "studres"
+      ONLINE_EDITOR_DATABASE_USERNAME: "postgres"
+      ONLINE_EDITOR_DATABASE_PASSWORD: "postgres"
+
   database:
     build: "./database"
     ports:

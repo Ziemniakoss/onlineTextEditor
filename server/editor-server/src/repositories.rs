@@ -1,21 +1,22 @@
 use postgres::{Client, NoTls};
 use log::error;
+use std::env;
 
 pub mod users;
 pub mod projects;
 pub mod files;
 
-const USERNAME: &str = "postgres";
-const PASSWORD: &str = "postgres";
-const HOST: &str = "127.0.0.1";
-const DB_NAME: &str = "studres";
-
 fn get_client() -> Client {
+	let password = env::var("ONLINE_EDITOR_DATABASE_PASSWORD").expect("SET \"ONLINE_EDITOR_DATABASE_PASSWORD\" env variable");
+	let username = env::var("ONLINE_EDITOR_DATABASE_USERNAME").expect("SET \"ONLINE_EDITOR_DATABASE_USERNAME\" env variable");
+	let host = env::var("ONLINE_EDITOR_DATABASE_HOST").expect("SET \"ONLINE_EDITOR_DATABASE_HOST\" env variable");
+	let dbname = env::var("ONLINE_EDITOR_DATABASE_DBNAME").expect("SET \"ONLINE_EDITOR_DATABASE_DBNAME\" env variable");
+
 	let client = Client::configure()
-		.dbname(DB_NAME)
-		.password(PASSWORD)
-		.user(USERNAME)
-		.host(HOST)
+		.dbname(&dbname)
+		.password(password)
+		.user(&username)
+		.host(&host)
 		.connect(NoTls);
 	match client {
 		Ok(c) => return c,
