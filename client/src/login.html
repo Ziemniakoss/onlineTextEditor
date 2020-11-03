@@ -2,11 +2,20 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Title</title>
+	<title>Login</title>
+	<link rel="stylesheet" href="styles/style.css">
+	<link rel="stylesheet" href="styles/form.css">
+	<script src="js/login.js"></script>
 </head>
 <body>
 <main>
-
+	<form id="login-form" class="vertical-form" action="127.0.0.1:5000/login">
+		<h1>Login</h1>
+		<input placeholder="Username" name="username" id="username-input">
+		<input placeholder="Password" name="password" id="password-input">
+		<button type="button" onclick="login()">Login</button>
+	</form>
+	<a href="register.html"></a>
 </main>
 </body>
 </html>

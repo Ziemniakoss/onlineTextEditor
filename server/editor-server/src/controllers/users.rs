@@ -42,6 +42,7 @@ pub async fn logout(session: Session) -> Result<HttpResponse<Body>> {
 pub async fn register(user_dto: web::Json<UserAuthorizationDto>) -> Result<HttpResponse<Body>> {
 	println!("{:#?}", user_dto);
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	response_builder.header("Access-Control-Allow-Origin","*");
 	return match create_user(&user_dto.username, &user_dto.password) {
 		Ok(user) => {
 			match serde_json::to_string(&user) {
