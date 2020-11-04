@@ -1,15 +1,12 @@
-use actix_redis::RedisSession;
-use actix_web::{middleware, App, HttpServer, web};
+use actix_web::{middleware, App, HttpServer};
 use editor_server::controllers::projects::{get_all_projects, delete_project, create_project, grant_access};
 use editor_server::controllers::users::{register, login, logout};
 use rand::Rng;
 use env_logger::Env;
-use time::Duration;
-use actix_service::Service;
-use futures::future::FutureExt;
 use actix_cors::Cors;
+use actix_http::cookie::SameSite;
+use actix_session::CookieSession;
 
-const REDIS_ADDR: &str = "127.0.0.1:6379";
 const SERVER_ADDR: &str = "0.0.0.0:5000";
 
 #[actix_web::main]
@@ -19,12 +16,17 @@ async fn main() -> std::io::Result<()> {
 	HttpServer::new(|| {
 		App::new()
 			.wrap(
-				RedisSession::new(REDIS_ADDR, &rand::thread_rng().gen::<[u8; 32]>())
-					.cookie_http_only(false)
-					.cookie_name("sessiona")
-					.cookie_max_age(Duration::hours(3)))
+				CookieSession::signed(&[0; 32])//Very unsecure but for example app this is sufficent
+					.secure(true)
+					.same_site(SameSite::Lax)
+					.name("session")
+			)
 			.wrap(middleware::Logger::default())
-			.wrap(Cors::permissive())
+			.wrap(
+				Cors::permissive()
+					// .max_age(60 * 60 * 3)
+					.supports_credentials()
+			)
 			.service(get_all_projects)
 			.service(delete_project)
 			.service(create_project)
