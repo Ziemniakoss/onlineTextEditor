@@ -1,7 +1,6 @@
 use actix_web::{middleware, App, HttpServer};
-use editor_server::controllers::projects::{get_all_projects, delete_project, create_project, grant_access};
-use editor_server::controllers::users::{register, login, logout};
-use rand::Rng;
+use editor_server::controllers::projects;
+use editor_server::controllers::users;
 use env_logger::Env;
 use actix_cors::Cors;
 use actix_http::cookie::SameSite;
@@ -17,25 +16,24 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.wrap(
 				CookieSession::signed(&[0; 32])//Very unsecure but for example app this is sufficent
-					.secure(true)
+					// .secure(true)
 					.same_site(SameSite::Lax)
 					.name("session")
 			)
 			.wrap(middleware::Logger::default())
 			.wrap(
 				Cors::permissive()
-					// .max_age(60 * 60 * 3)
 					.supports_credentials()
 			)
-			.service(get_all_projects)
-			.service(delete_project)
-			.service(create_project)
+			.service(projects::get_my_projects)
+			.service(projects::delete_project)
+			.service(projects::create_project)
 			// .service(revoke_access)
-			.service(grant_access)
+			.service(projects::grant_access)
 
-			.service(register)
-			.service(login)
-			.service(logout)
+			.service(users::register)
+			.service(users::login)
+			.service(users::logout)
 	})
 		.bind(SERVER_ADDR)?
 		.run()

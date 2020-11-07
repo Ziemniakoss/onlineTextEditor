@@ -4,7 +4,7 @@ use actix_session::Session;
 use crate::session_manager::get_user_id;
 use actix_http::http::StatusCode;
 use serde::Deserialize;
-use crate::repositories::projects::{Project, get_project};
+use crate::repositories::projects::{Project, get};
 use crate::repositories::users::{User, get_user};
 use log::{error, info, warn};
 
@@ -14,8 +14,32 @@ pub struct ProjectCreationDto {
 	description: String,
 }
 
-#[get("/projects")]
-pub async fn get_all_projects(session: Session) -> Result<HttpResponse<Body>> {
+#[get("/projects/my")]
+pub async fn get_my_projects(session: Session) -> HttpResponse<Body> {
+	let response_builder = HttpResponse::build(StatusCode::OK);
+	let user_id:i32;
+	match get_user_id(&session) {
+		Some(user_id_in_session) => {}
+		None => {}//TODO
+	}
+	let response = HttpResponse::Ok().body(Body::from("projetky"));
+	return response;
+}
+
+#[get("/projects/shared-for-me")]
+pub async fn get_projects_shared_for_me(session: Session) -> HttpResponse<Body> {
+	let response_builder = HttpResponse::build(StatusCode::OK);
+	match get_user_id(&session) {
+		Some(user_id) => {}
+		None => {}//TODO
+	}
+	let response = HttpResponse::Ok().body(Body::from("projetky"));
+	return response;
+}
+
+
+#[get("/projects/{id}")]
+pub async fn get_project(session: Session) -> Result<HttpResponse<Body>> {
 	let response_builder = HttpResponse::build(StatusCode::OK);
 	match get_user_id(&session) {
 		Some(user_id) => {}
@@ -39,7 +63,7 @@ pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session:
 				.body(Body::from("{\"message\":\"You have to be logged in to create projects\"}")));
 		}
 	}
-	return match crate::repositories::projects::create_project(Project {
+	return match crate::repositories::projects::create(Project {
 		id: -100,
 		name: project_dto.name.clone(),
 		description: project_dto.description.clone(),
@@ -73,7 +97,7 @@ pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sessi
 			current_user_id = user_id_from_session;
 		}
 		None => {
-			warn!("Unauthorized user wanted to grant access to project {}", id);
+			warn!("Unauthorized user wanted to grant access to project {}", id);//TODO ip bla bla bla
 			return Ok(response_builder
 				.status(StatusCode::UNAUTHORIZED)
 				.body("Please log in"));
@@ -86,7 +110,7 @@ pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sessi
 			.status(StatusCode::NOT_FOUND)
 			.body(Body::from("User does not exist")));
 	}
-	let project = get_project(id);
+	let project = get(id);
 	if let None = project {
 		warn!("User with id {} wanted to grant user with id {} access to non-existing project with id {}", current_user_id, user_id, id);
 		return Ok(response_builder
