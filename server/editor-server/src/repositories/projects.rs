@@ -21,9 +21,9 @@ pub trait IProjectsRepository {
 
 	fn has_access(&self, project: &Project, user: &User) -> bool;
 
-	fn grant_access(&self, project: &Project, user: &User);
+	fn grant_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError>;
 
-	fn revoke_access(&self, project: &Project, user: &User) -> Result<(), RevokingAccessError>;
+	fn revoke_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError>;
 }
 
 pub enum AccessManagementError {
@@ -85,7 +85,7 @@ impl IProjectsRepository for ProjectRepository {
 				if rows.len() != 1 {
 					return None;
 				}
-				Some(convert_to_project(rows.first()?))
+				Some(convert_to_project(rows.first().unwrap()))
 			}
 			Err(error) => {
 				error!("Error occured while fetching project {}: {}", id, error);
@@ -100,28 +100,26 @@ impl IProjectsRepository for ProjectRepository {
 			FROM projects_shared_for_users psfu
 			JOIN projects p on p.id = psfu.project_id
 			JOIN users u on u.id = p.owner_id
-			WHERE psfu.user_id = $1", &[user.id]
-		).unwrap_or_default().iter()
+			WHERE psfu.user_id = $1", &[user.id],
+		).unwrap().iter()
 			.map(|row| convert_to_project(row))
-			.collect()
+			.collect();
 	}
 
 	fn get_all_owned_by(&self, user: &User) -> Vec<Project> {
-		let rows = get_client().query(
+		return get_client().query(
 			"SELECT p.id, p.name, p.description, u.id, u.name
 			FROM projects p
 			JOIN users u on u.id = p.owner_id
 			WHERE owner_id = null",
 			&[user.id],
-		).expect("Can't fetch projects owned by some user");
-
-		return rows.iter()
+		).unwrap().iter()
 			.map(|row| convert_to_project(&row))
 			.collect();
 	}
 
 	fn has_access(&self, project: &Project, user: &User) -> bool {
-		match get_client().query_one("SELECT * FROM has_access_to_project($1, $2)", &[&project.id, &user.id]) {
+		return match get_client().query_one("SELECT * FROM has_access_to_project($1, $2)", &[&project.id, &user.id]) {
 			Ok(row) => {
 				row.get(0)
 			}
@@ -129,16 +127,25 @@ impl IProjectsRepository for ProjectRepository {
 				error!("Error occured while checking access to project: {}", error);
 				false
 			}
+		};
+	}
+
+	fn grant_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError> {
+		return match  get_client().query_one(
+			"SELECT * FROM grant_access_to_project($1, $2)", &[&project.id, &user.id]
+		).unwrap().get(0){
+			-1 => Err(AccessManagementError::UserIsOwner),
+			_ => Ok(())
 		}
-		unimplemented!()
 	}
 
-	fn grant_access(&self, project: &Project, user: &User) -> Result<(), ProjectsRepositoryError> {
-		unimplemented!()
-	}
-
-	fn revoke_access(&self, project: &Project, user: &User) -> Result<(), ProjectsRepositoryError> {
-		unimplemented!()
+	fn revoke_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError> {
+		return match  get_client().query_one(
+			"SELECT * FROM revoke_access_to_project($1, $2)", &[project.id, user.id]
+		).unwrap().get(0) {
+			-1 => Err(AccessManagementError::UserDoesNotExists),
+			_ => Ok(())
+		}
 	}
 }
 
@@ -153,61 +160,4 @@ fn convert_to_project(row: &Row) -> Project {
 		description: row.get(2),
 		owner,
 	}
-}
-
-pub fn grant_access(project: &Project, user: &User) -> Result<(), DatabaseError> {
-	let mut client = get_client();
-	let mut result = Ok(());
-
-	match client.query_one("SELECT * FROM grant_access_to_project($1, $2", &[&project.id, &user.id]) {
-		Ok(row) => {
-			let result_code = row.get(0);
-			if result_code < 0 {
-				result = Err(DatabaseError {
-					error_code: result_code,
-					message: get_grant_access_to_project_message_from_code(result_code),
-				})
-			}
-		}
-		Err(_) => result = Err(DatabaseError {
-			error_code: -2,
-			message: String::from("Unknown error"),
-		})
-	}
-	result
-}
-
-fn get_grant_access_to_project_message_from_code(error_code: i32) -> String {
-	match error_code {
-		-1 => String::from("Project does not exist"),
-		_ => String::from("Unknown error")
-	}
-}
-
-pub fn revoke_access(project: &Project, user: &User) -> Result<(), DatabaseError> {
-	return match get_client().query_one(
-		"SELECT * FROM revoke_access_to_project($1, $2)", &[&project.id, &user.id],
-	) {
-		Ok(result) => {
-			let result_code: i32 = result.get(0);
-			if result_code < 0 {
-				return Err(DatabaseError {
-					error_code: result_code,
-					message: get_revoke_access_message_from_code(result_code),
-				});
-			}
-			Ok(())
-		}
-		Err(_) => Err(DatabaseError {
-			error_code: -2,
-			message: String::from("Database error"),
-		})
-	};
-}
-
-fn get_revoke_access_message_from_code(error_code: i32) -> String {
-	return match error_code {
-		-1 => String::from("This user is project owner"),
-		_ => String::from("Unknown error")
-	};
 }
