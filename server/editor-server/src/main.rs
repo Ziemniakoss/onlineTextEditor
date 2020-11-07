@@ -16,7 +16,7 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.wrap(
 				CookieSession::signed(&[0; 32])//Very unsecure but for example app this is sufficent
-					// .secure(true)
+					.secure(false)
 					.same_site(SameSite::Lax)
 					.name("session")
 			)

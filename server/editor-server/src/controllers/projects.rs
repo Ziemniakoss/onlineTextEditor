@@ -4,9 +4,10 @@ use actix_session::Session;
 use crate::session_manager::get_user_id;
 use actix_http::http::StatusCode;
 use serde::Deserialize;
-use crate::repositories::projects::{Project, get};
-use crate::repositories::users::{User, get_user};
-use log::{error, info, warn};
+use crate::repositories::users::{get_user};
+use crate::services::projects;
+use log::{error, warn};
+use crate::services::projects::{SaveError, AccessGrantingError};
 
 #[derive(Deserialize, Debug)]
 pub struct ProjectCreationDto {
@@ -16,72 +17,129 @@ pub struct ProjectCreationDto {
 
 #[get("/projects/my")]
 pub async fn get_my_projects(session: Session) -> HttpResponse<Body> {
-	let response_builder = HttpResponse::build(StatusCode::OK);
-	let user_id:i32;
+	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	let user_id: i32;
 	match get_user_id(&session) {
-		Some(user_id_in_session) => {}
-		None => {}//TODO
+		Some(user_id_in_session) => {
+			user_id = user_id_in_session;
+		}
+		None => {
+			error!("Not logged in user tried to fetch his/its/its projects");
+			return response_builder.status(StatusCode::UNAUTHORIZED)
+				.body(Body::from("Please log in"));
+		}
 	}
-	let response = HttpResponse::Ok().body(Body::from("projetky"));
-	return response;
+	let user = get_user(user_id).unwrap();
+	let service = projects::new(user);
+	return response_builder.json(service.get_owned_projects());
 }
 
 #[get("/projects/shared-for-me")]
 pub async fn get_projects_shared_for_me(session: Session) -> HttpResponse<Body> {
-	let response_builder = HttpResponse::build(StatusCode::OK);
+	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	let user_id;
 	match get_user_id(&session) {
-		Some(user_id) => {}
-		None => {}//TODO
+		Some(user_id_in_session) => user_id = user_id_in_session,
+		None => {
+			error!("Not logged in user tried to fetch his/its/its projects");
+			return response_builder.status(StatusCode::UNAUTHORIZED)
+				.body(Body::from("Please log in"));
+		}
 	}
-	let response = HttpResponse::Ok().body(Body::from("projetky"));
-	return response;
+	let user;
+	match get_user(user_id) {
+		None => {
+			warn!("Recived request from session with not existing user, possible attack");//TODO ip bla bla bla
+			return response_builder
+				.status(StatusCode::INTERNAL_SERVER_ERROR)
+				.body("You don't exist");
+		}
+		Some(u) => user = u
+	}
+	let service = projects::new(user);
+	return response_builder.json(service.get_projects_shared_to_user());
 }
 
 
 #[get("/projects/{id}")]
-pub async fn get_project(session: Session) -> Result<HttpResponse<Body>> {
-	let response_builder = HttpResponse::build(StatusCode::OK);
+pub async fn get_project(session: Session, web::Path(id): web::Path<i32>) -> HttpResponse<Body> {
+	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	let user;
 	match get_user_id(&session) {
-		Some(user_id) => {}
-		None => {}//TODO
+		Some(user_id_in_session) => {
+			match get_user(user_id_in_session) {
+				None => {
+					warn!("Recived request from session with not existing user, possible attack");//TODO ip bla bla bla
+					return response_builder
+						.status(StatusCode::INTERNAL_SERVER_ERROR)
+						.body("You don't exist");
+				}
+				Some(u) => user = u
+			}
+		}
+		None => {
+			error!("Not logged in user tried to fetch his/its/its projects");
+			return response_builder
+				.status(StatusCode::UNAUTHORIZED)
+				.body(Body::from("Please log in"));
+		}
 	}
-	let response = HttpResponse::Ok().body(Body::from("projetky"));
-	return Ok(response);
+	let service = projects::new(user);
+	return match service.get(id) {
+		Ok(project) => response_builder.json(project),
+		Err(_) => response_builder
+			.status(StatusCode::NOT_FOUND)
+			.body("Project does not eist or you dont have access to it")
+	};
 }
 
 #[post("/projects")]
-pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session: Session) -> Result<HttpResponse<Body>> {
-	let user_id: i32;
+pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session: Session) -> HttpResponse<Body> {
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	let user;
 	match get_user_id(&session) {
-		Some(user_id_from_session) => {
-			user_id = user_id_from_session;
+		Some(user_id) => {
+			match get_user(user_id) {
+				Some(u) => user = u,
+				None => {
+					warn!("Session with not existing user");
+					return response_builder
+						.status(StatusCode::INTERNAL_SERVER_ERROR)
+						.body("You dont exist");
+				}
+			}
 		}
 		None => {
-			return Ok(response_builder
+			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.body(Body::from("{\"message\":\"You have to be logged in to create projects\"}")));
+				.body(Body::from("{\"message\":\"You have to be logged in to create projects\"}"));
 		}
 	}
-	return match crate::repositories::projects::create(Project {
-		id: -100,
-		name: project_dto.name.clone(),
-		description: project_dto.description.clone(),
-		owner: User { id: user_id, name: String::new() },
-	}) {
-		Ok(project_id) => {
-			Ok(response_builder.body(format!("{{\"id\": \"{}\"}}", project_id)))
+	let service = projects::new(user);
+	return match service.create(project_dto.name.clone(), project_dto.description.clone()) {
+		Ok(project) => {
+			response_builder.json(project)
 		}
-		Err(error) => Ok(response_builder.status(StatusCode::BAD_REQUEST).body(format!("{{\"message\": {}}}", error.message)))
+		Err(error) => {
+			response_builder.status(StatusCode::BAD_REQUEST);
+			match error {
+				SaveError::InvalidName => response_builder.body("Invalid name"),
+				SaveError::ProjectWithSameNaeAlreadyExists => response_builder.body("You have project with same name"),
+				_ => {
+					error!("Unknon error occured while creating project");
+					response_builder.status(StatusCode::INTERNAL_SERVER_ERROR).finish()
+				}
+			}
+		}
 	};
 }
 
 #[delete("/projects/{id}")]
-pub async fn delete_project(web::Path(id): web::Path<u32>) -> Result<HttpResponse<Body>> {
+pub async fn delete_project(web::Path(id): web::Path<u32>, session: Session) -> Result<HttpResponse<Body>> {
 	if id == 10 {
 		return Ok(HttpResponse::Ok().body("aa"));
 	}
-	return Ok(HttpResponse::NotFound().body("Project not found"));
+	return Ok(HttpResponse::NotFound().body("Project not found"));//TODO
 }
 // TODO
 // #[delete("/projects/{id}/access/{user_id}")]
@@ -89,51 +147,45 @@ pub async fn delete_project(web::Path(id): web::Path<u32>) -> Result<HttpRespons
 // }
 
 #[post("/projects/{id}/access/{user_id}")]
-pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, session: Session) -> Result<HttpResponse<Body>> {
+pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, session: Session) -> HttpResponse<Body> {
 	let mut response_builder = HttpResponse::build(StatusCode::OK);
-	let current_user_id: i32;
+	let user;
 	match get_user_id(&session) {
 		Some(user_id_from_session) => {
-			current_user_id = user_id_from_session;
+			user = get_user(user_id_from_session).expect("User does not exist");
 		}
 		None => {
 			warn!("Unauthorized user wanted to grant access to project {}", id);//TODO ip bla bla bla
-			return Ok(response_builder
+			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.body("Please log in"));
+				.body("Please log in");
 		}
 	}
-	let user = get_user(user_id);
-	if let None = user {
-		warn!("User with id {} wanted to grant non-existing user with id {} access to project {}", current_user_id, user_id, id);
-		return Ok(response_builder
-			.status(StatusCode::NOT_FOUND)
-			.body(Body::from("User does not exist")));
-	}
-	let project = get(id);
-	if let None = project {
-		warn!("User with id {} wanted to grant user with id {} access to non-existing project with id {}", current_user_id, user_id, id);
-		return Ok(response_builder
-			.status(StatusCode::NOT_FOUND)
-			.body(Body::from("Project does not exist")));
-	}
-	let project = project.unwrap();
-	if project.owner.id == current_user_id {
-		warn!("User with id {} wanted to grant access to project with id {} to itself", current_user_id, id);
-		return Ok(response_builder
-			.status(StatusCode::BAD_REQUEST)
-			.body("You are owner of this project"));
-	}
-	return match crate::repositories::projects::grant_access(&project, &user.unwrap()) {
-		Ok(_) => {
-			info!("User with id {} granted user with id {} access to {}", current_user_id, user_id, id);
-			Ok(response_builder.body("granted access to user"))
+	let service = projects::new(user);
+	let project;
+	match service.get(id) {
+		Ok(p) => project = p,
+		Err(_) => {
+			return response_builder
+				.status(StatusCode::NOT_FOUND)
+				.body("Project does not exist or you dont have access to it");
 		}
+	}
+	let user_to_grant;
+	match get_user(user_id) {
+		Some(u) => user_to_grant = u,
+		None => return response_builder
+			.status(StatusCode::NOT_FOUND)
+			.body("User does not exists")
+	}
+	return match service.grant_access(&project, &user_to_grant) {
+		Ok(_) => response_builder.body("Ok"),
 		Err(error) => {
-			error!("Error occurred while granting access to project: {}", error.message);
-			Ok(response_builder
-				.status(StatusCode::INTERNAL_SERVER_ERROR)
-				.body("Unknown error occurred"))
+			match error {
+				AccessGrantingError::NotOwner => response_builder
+					.status(StatusCode::NOT_FOUND)
+					.body("Project does not exist or you dont have access to it")
+			}
 		}
 	};
 }

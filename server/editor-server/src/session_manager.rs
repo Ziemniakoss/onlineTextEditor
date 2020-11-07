@@ -1,5 +1,4 @@
 use actix_session::Session;
-use actix_http::Error;
 use log::error;
 
 pub fn get_user_id(session: &Session) -> Option<i32> {

@@ -1,13 +1,7 @@
 use crate::repositories::get_client;
-use serde::Serialize;
 use postgres::Row;
 use log::{error};
-
-#[derive(Serialize)]
-pub struct User {
-	pub id: i32,
-	pub name: String,
-}
+use crate::models::User;
 
 pub fn create_user(login: &String, password: &String) -> Result<User, String> {
 	let mut client = get_client();

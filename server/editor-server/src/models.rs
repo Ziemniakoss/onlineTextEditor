@@ -1,14 +1,18 @@
+use serde::Serialize;
+
+#[derive(Serialize)]
 pub struct User {
 	pub id: i32,
 	pub name: String,
 }
 
-impl PartialEq for User{
+impl PartialEq for User {
 	fn eq(&self, other: &Self) -> bool {
 		self.id == other.id
 	}
 }
 
+#[derive(Serialize)]
 pub struct Project {
 	pub id: Option<i32>,
 	pub name: String,
@@ -16,18 +20,18 @@ pub struct Project {
 	pub owner: User,
 }
 
-impl Project{
-	pub fn new(name:String, description:String, owner: User) -> Project{
-		Project{
-			id:None,
-			name,
-			description,
-			owner
+impl Project {
+	pub fn new(name: String, description: String, owner: User) -> Project {
+		Project {
+			id: None,
+			name: name.to_owned(),
+			description: description.to_owned(),
+			owner: User { id: owner.id, name: owner.name.clone() },
 		}
 	}
 }
 
-impl PartialEq for Project{
+impl PartialEq for Project {
 	fn eq(&self, other: &Self) -> bool {
 		self.id == other.id
 	}
