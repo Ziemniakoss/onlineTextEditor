@@ -9,15 +9,11 @@ export default class ProjectRepository {
 				'content-type': 'application/json'
 			})
 		})
-		return fetch(request).then(response => {
+		return await fetch(request).then(response => {
 			if (response.status === 401) {
 				throw NOT_LOGGED_IN_ERROR;
 			} else if (response.status === 200) {
-				const projects = response.json();
-				console.log(projects)
-				console.log("Success");
-				console.log(response.body);
-				return projects;
+				return response.json();
 			}
 		}).catch(e => console.error(e))
 	}
@@ -31,10 +27,7 @@ export default class ProjectRepository {
 			if (response.status === 401) {
 				throw NOT_LOGGED_IN_ERROR;
 			} else if (response.status === 200) {
-				const projects = response.json();
-				console.log("Shared for me")
-				console.log(projects);
-				return projects;
+				return  response.json();
 			}
 		}).catch(e => console.error(e))
 

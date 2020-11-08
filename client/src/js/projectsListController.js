@@ -19,9 +19,10 @@ export default class ProjectsListController {
 		this.projectsRepository = new ProjectRepository();
 	}
 
-	loadProjects() {
-		console.log("Loading projects");
-		this.projectsRepository.getAllOwned();
-		this.projectsRepository.getAllSharedTo();
+	async loadProjects() {
+		const myProjectsRequest = this.projectsRepository.getAllOwned();
+		const sharedProjectsRequest = await this.projectsRepository.getAllSharedTo();
+		this.view.showMyProjects(await  myProjectsRequest);
+		this.view.showSharedProjects(await sharedProjectsRequest);
 	}
 }

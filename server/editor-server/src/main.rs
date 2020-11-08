@@ -24,15 +24,12 @@ async fn main() -> std::io::Result<()> {
 			.wrap(middleware::Logger::default())
 			.wrap(
 				Cors::permissive()
-
 					.supports_credentials()
 			)
 			.service(projects::get_my_projects)
 			.service(projects::get_projects_shared_for_me)
-
 			.service(projects::delete_project)
 			.service(projects::create_project)
-			// .service(revoke_access)
 			.service(projects::grant_access)
 			.service(projects::revoke_access)
 
