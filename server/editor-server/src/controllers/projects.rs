@@ -7,7 +7,8 @@ use serde::Deserialize;
 use crate::repositories::users::{get_user};
 use crate::services::projects;
 use log::{error, warn};
-use crate::services::projects::{SaveError, AccessGrantingError};
+use crate::services::projects::{SaveError, AccessGrantingError, GetError, AccessRevokingError};
+use crate::models::{Project, User};
 
 #[derive(Deserialize, Debug)]
 pub struct ProjectCreationDto {
@@ -136,15 +137,57 @@ pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session:
 
 #[delete("/projects/{id}")]
 pub async fn delete_project(web::Path(id): web::Path<u32>, session: Session) -> Result<HttpResponse<Body>> {
-	if id == 10 {
-		return Ok(HttpResponse::Ok().body("aa"));
-	}
-	return Ok(HttpResponse::NotFound().body("Project not found"));//TODO
+	todo!()
 }
-// TODO
-// #[delete("/projects/{id}/access/{user_id}")]
-// pub async fn revoke_access(web::Path(id): web::Path<i32>, session: Session) -> Result<HttpResponse<Body>> {
-// }
+
+#[delete("/projects/{id}/access/{user_id}")]
+pub async fn revoke_access(web::Path((id, user_id)): web::Path<(i32, i32)>, session: Session) -> HttpResponse<Body> {
+	let user;
+	let mut response_builder = HttpResponse::build(StatusCode::OK);
+	match get_user_id(&session) {
+		Some(user_id) => {
+			user = get_user(user_id).unwrap();
+		}
+		None => {
+			return response_builder
+				.status(StatusCode::UNAUTHORIZED)
+				.body("Please log in");
+		}
+	}
+	let user_to_grant_access;
+	match get_user(user_id) {
+		Some(u) => user_to_grant_access = u,
+		None => return response_builder
+			.status(StatusCode::NOT_FOUND)
+			.body("User does not exist")
+	}
+	let project;
+	let service = projects::new(user);
+	match service.get(id) {
+		Ok(p) => project = p,
+		Err(_) => {
+			return response_builder
+				.status(StatusCode::NOT_FOUND)
+				.body("Project does not exist or you dont have access to id");
+		}
+	}
+	return match service.revoke_access(&project, &user_to_grant_access){
+		Ok(_) => response_builder.body("ok"),
+		Err(error) =>{
+			match error {
+				AccessRevokingError::IsOwner => response_builder
+					.status(StatusCode::BAD_REQUEST)
+					.body("This user is owner of project"),
+				AccessRevokingError::UserIsNotOwner => response_builder
+					.status(StatusCode::FORBIDDEN)
+					.body("You are not owner of this project"),
+				AccessRevokingError::UserDoesNotExists => response_builder
+					.status(StatusCode::NOT_FOUND)
+					.body("This user does not exist")
+			}
+		}
+	}
+}
 
 #[post("/projects/{id}/access/{user_id}")]
 pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, session: Session) -> HttpResponse<Body> {

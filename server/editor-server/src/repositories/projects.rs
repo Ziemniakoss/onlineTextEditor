@@ -71,10 +71,10 @@ impl IProjectsRepository for ProjectRepository {
 
 	fn get(&self, id: i32) -> Option<Project> {
 		return match get_client().query(
-			"SELECT p.id, p.name, p.description, u.id, u.name\
-		FROM projects p\
-		JOIN users u on p.owner_id = u.id \
-		WHERE id = $1", &[&id],
+			"SELECT p.id, p.name, p.description, u.id, u.name
+		FROM projects p
+		JOIN users u on p.owner_id = u.id
+		WHERE p.id = $1", &[&id],
 		) {
 			Ok(rows) => {
 				if rows.len() != 1 {
@@ -127,7 +127,8 @@ impl IProjectsRepository for ProjectRepository {
 
 	fn grant_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError> {
 		return match get_client().query_one(
-			"SELECT * FROM grant_access_to_project($1, $2)", &[&project.id, &user.id],
+			"SELECT * FROM grant_access_to_project($1, $2)",
+			&[&project.id, &user.id]
 		).unwrap().get(0) {
 			-1 => Err(AccessManagementError::UserIsOwner),
 			_ => Ok(())
@@ -136,7 +137,8 @@ impl IProjectsRepository for ProjectRepository {
 
 	fn revoke_access(&self, project: &Project, user: &User) -> Result<(), AccessManagementError> {
 		return match get_client().query_one(
-			"SELECT * FROM revoke_access_to_project($1, $2)", &[&project.id, &user.id],
+			"SELECT * FROM revoke_access_to_project($1, $2)",
+			&[&project.id, &user.id]
 		).unwrap().get(0) {
 			-1 => Err(AccessManagementError::UserDoesNotExists),
 			_ => Ok(())

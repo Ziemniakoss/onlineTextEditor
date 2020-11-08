@@ -110,7 +110,7 @@ BEGIN
 	   EXISTS(SELECT user_id FROM projects_shared_for_users WHERE user_id = _user_id AND project_id = _project_id) THEN
 		RETURN 0;
 	END IF;
-	INSERT INTO projects_shared_for_users (user_id, project_id) VALUES (_user_id, project_id);
+	INSERT INTO projects_shared_for_users (user_id, project_id) VALUES (_user_id, _project_id);
 	RETURN 0;
 END;
 $body$;
