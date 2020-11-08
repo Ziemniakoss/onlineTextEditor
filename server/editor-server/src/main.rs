@@ -16,13 +16,15 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.wrap(
 				CookieSession::signed(&[0; 32])//Very unsecure but for example app this is sufficent
-					.secure(false)
+					.secure(true)
+					.http_only(true)
 					.same_site(SameSite::Lax)
 					.name("session")
 			)
 			.wrap(middleware::Logger::default())
 			.wrap(
 				Cors::permissive()
+
 					.supports_credentials()
 			)
 			.service(projects::get_my_projects)

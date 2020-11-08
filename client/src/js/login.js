@@ -10,7 +10,8 @@ async function login() {
 		body: JSON.stringify(dto),
 		headers: new Headers({
 			'content-type': 'application/json'
-		}), credentials: "include",
+		}),
+		credentials: "include",
 
 	});
 	fetch(request).then(result => {
