@@ -27,7 +27,7 @@ pub async fn get_my_projects(session: Session) -> HttpResponse<Body> {
 		None => {
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder.status(StatusCode::UNAUTHORIZED)
-				.body(Body::from("Please log in"));
+				.json(Body::from("Please log in"));
 		}
 	}
 	let user = get_user(user_id).unwrap();
@@ -44,7 +44,7 @@ pub async fn get_projects_shared_for_me(session: Session) -> HttpResponse<Body> 
 		None => {
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder.status(StatusCode::UNAUTHORIZED)
-				.body(Body::from("Please log in"));
+				.json(Body::from("Please log in"));
 		}
 	}
 	let user;
@@ -53,7 +53,7 @@ pub async fn get_projects_shared_for_me(session: Session) -> HttpResponse<Body> 
 			warn!("Recived request from session with not existing user, possible attack");//TODO ip bla bla bla
 			return response_builder
 				.status(StatusCode::INTERNAL_SERVER_ERROR)
-				.body("You don't exist");
+				.json("You don't exist");
 		}
 		Some(u) => user = u
 	}
@@ -73,7 +73,7 @@ pub async fn get_project(session: Session, web::Path(id): web::Path<i32>) -> Htt
 					warn!("Recived request from session with not existing user, possible attack");//TODO ip bla bla bla
 					return response_builder
 						.status(StatusCode::INTERNAL_SERVER_ERROR)
-						.body("You don't exist");
+						.json("You don't exist");
 				}
 				Some(u) => user = u
 			}
@@ -82,7 +82,7 @@ pub async fn get_project(session: Session, web::Path(id): web::Path<i32>) -> Htt
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.body(Body::from("Please log in"));
+				.json(Body::from("Please log in"));
 		}
 	}
 	let service = projects::new(user);
@@ -90,7 +90,7 @@ pub async fn get_project(session: Session, web::Path(id): web::Path<i32>) -> Htt
 		Ok(project) => response_builder.json(project),
 		Err(_) => response_builder
 			.status(StatusCode::NOT_FOUND)
-			.body("Project does not eist or you dont have access to it")
+			.json("Project does not eist or you dont have access to it")
 	};
 }
 
@@ -106,14 +106,14 @@ pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session:
 					warn!("Session with not existing user");
 					return response_builder
 						.status(StatusCode::INTERNAL_SERVER_ERROR)
-						.body("You dont exist");
+						.json("You dont exist");
 				}
 			}
 		}
 		None => {
 			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.body(Body::from("{\"message\":\"You have to be logged in to create projects\"}"));
+				.json("You have to be logged in to create projects");
 		}
 	}
 	let service = projects::new(user);
@@ -124,8 +124,8 @@ pub async fn create_project(project_dto: web::Json<ProjectCreationDto>, session:
 		Err(error) => {
 			response_builder.status(StatusCode::BAD_REQUEST);
 			match error {
-				SaveError::InvalidName => response_builder.body("Invalid name"),
-				SaveError::ProjectWithSameNaeAlreadyExists => response_builder.body("You have project with same name"),
+				SaveError::InvalidName => response_builder.json("Invalid name"),
+				SaveError::ProjectWithSameNaeAlreadyExists => response_builder.json("You have project with same name"),
 				_ => {
 					error!("Unknon error occured while creating project");
 					response_builder.status(StatusCode::INTERNAL_SERVER_ERROR).finish()
@@ -151,7 +151,7 @@ pub async fn revoke_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sess
 		None => {
 			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.body("Please log in");
+				.json("Please log in");
 		}
 	}
 	let user_to_grant_access;
@@ -159,7 +159,7 @@ pub async fn revoke_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sess
 		Some(u) => user_to_grant_access = u,
 		None => return response_builder
 			.status(StatusCode::NOT_FOUND)
-			.body("User does not exist")
+			.json("User does not exist")
 	}
 	let project;
 	let service = projects::new(user);

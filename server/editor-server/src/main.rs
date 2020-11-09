@@ -5,13 +5,17 @@ use env_logger::Env;
 use actix_cors::Cors;
 use actix_http::cookie::SameSite;
 use actix_session::CookieSession;
+use log::{info};
 
 const SERVER_ADDR: &str = "0.0.0.0:5000";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-	println!("Starting server at {}", SERVER_ADDR);
-	env_logger::from_env(Env::default().default_filter_or("info")).init();
+	env_logger::from_env(Env::default()
+		.default_filter_or("info"))
+		.init();
+	info!("Starting server at {}", SERVER_ADDR);
+
 	HttpServer::new(|| {
 		App::new()
 			.wrap(

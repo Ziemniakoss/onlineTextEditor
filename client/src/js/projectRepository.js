@@ -27,7 +27,7 @@ export default class ProjectRepository {
 			if (response.status === 401) {
 				throw NOT_LOGGED_IN_ERROR;
 			} else if (response.status === 200) {
-				return  response.json();
+				return response.json();
 			}
 		}).catch(e => console.error(e))
 
@@ -43,6 +43,32 @@ export default class ProjectRepository {
 
 	async revokeAccess(project, user) {
 
+	}
+
+	/**
+	 *
+	 * @param project
+	 * @return {Promise<Project>} string jeżeli był error
+	 */
+	async create(project) {
+		const request = new Request(URI_TO_SERVER + "/projects", {
+			method: "POST",
+			body: JSON.stringify(project),
+			credentials: "include",
+			headers: new Headers({
+				'content-type': 'application/json'
+			})
+		});
+		const response = await fetch(request);
+		if (response.status === 401) {
+			throw NOT_LOGGED_IN_ERROR;
+		}
+		const body = await response.json();
+		if (response.status === 200) {
+			return body;
+		} else {
+			throw body;
+		}
 	}
 }
 

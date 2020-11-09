@@ -13,7 +13,7 @@ export default class ProjectsListView {
 	}
 
 	showSharedProjects(projects) {
-		if(projects == null || projects.length() == 0) {
+		if(projects == null || projects.length === 0) {
 			return;
 		}
 		console.log("shared projects");
