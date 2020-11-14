@@ -27,7 +27,7 @@ pub async fn get_my_projects(session: Session) -> HttpResponse<Body> {
 		None => {
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder.status(StatusCode::UNAUTHORIZED)
-				.json(Body::from("Please log in"));
+				.json("Please log in");
 		}
 	}
 	let user = get_user(user_id).unwrap();
@@ -44,7 +44,7 @@ pub async fn get_projects_shared_for_me(session: Session) -> HttpResponse<Body> 
 		None => {
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder.status(StatusCode::UNAUTHORIZED)
-				.json(Body::from("Please log in"));
+				.json("Please log in");
 		}
 	}
 	let user;
@@ -82,7 +82,7 @@ pub async fn get_project(session: Session, web::Path(id): web::Path<i32>) -> Htt
 			error!("Not logged in user tried to fetch his/its/its projects");
 			return response_builder
 				.status(StatusCode::UNAUTHORIZED)
-				.json(Body::from("Please log in"));
+				.json("Please log in");
 		}
 	}
 	let service = projects::new(user);
@@ -231,4 +231,8 @@ pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sessi
 			}
 		}
 	};
+}
+
+pub async fn start_editing_session(){
+
 }
