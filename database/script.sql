@@ -17,7 +17,8 @@ CREATE TABLE files
 (
 	id         SERIAL PRIMARY KEY,
 	name       CHAR(100) NOT NULL CHECK (length(name) > 0),
-	project_id INT NOT NULL REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE
+	project_id INT       NOT NULL REFERENCES projects (id) ON DELETE CASCADE ON UPDATE CASCADE,
+	unique (name, project_id)
 );
 
 create TABLE projects_shared_for_users
@@ -127,29 +128,57 @@ BEGIN
 END;
 $body$;
 
-CREATE OR REPLACE FUNCTION has_access_to_project(_project_id INT, _user_id INT) RETURNS BOOLEAN LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION has_access_to_project(_project_id INT, _user_id INT) RETURNS BOOLEAN
+	LANGUAGE plpgsql
 AS
 $body$
 BEGIN
 	IF EXISTS(SELECT id FROM projects WHERE id = _project_id AND owner_id = _user_id) THEN
 		RETURN TRUE;
 	END IF;
-	RETURN EXISTS(SELECT project_id FROM projects_shared_for_users WHERE project_id = _project_id AND user_id = _user_id);
+	RETURN EXISTS(
+			SELECT project_id FROM projects_shared_for_users WHERE project_id = _project_id AND user_id = _user_id);
 END;
 $body$;
 
-CREATE OR REPLACE FUNCTION create_file(_project_id INT, _name CHAR) RETURNS INT LANGUAGE plpgsql AS
+CREATE OR REPLACE FUNCTION create_file(_project_id INT, _name CHAR) RETURNS INT
+	LANGUAGE plpgsql AS
 $body$
 BEGIN
-    IF _name IS NULL OR length(_name) = 0 THEN
+	IF _name IS NULL OR length(_name) = 0 THEN
 		RETURN -1;
 	END IF;
-    IF length(_name) = 0 THEN
+	IF NOT EXISTS(SELECT id FROM projects WHERE id = _project_id) THEN
 		RETURN -2;
 	END IF;
-    IF NOT EXISTS(SELECT id FROM projects WHERE id = _project_id) THEN
+	INSERT INTO files (name, project_id) VALUES (_name, _project_id);
+	RETURN 0;
+END;
+$body$;
+
+CREATE OR REPLACE FUNCTION update_file(_id INT, _new_name CHAR) RETURNS INT
+	LANGUAGE plpgsql AS
+$body$
+DECLARE
+	_old_name   CHAR;
+	_project_id INT;
+BEGIN
+	IF _new_name IS NULL OR length(_new_name) = 0 THEN
+		RETURN -1;
+	END IF;
+	SELECT name FROM files WHERE id = _id INTO _old_name;
+	IF _old_name IS NULL THEN
+		RETURN -2;
+	end if;
+	If _old_name = _new_name THEN
+		RETURN 0;
+	END IF;
+	SELECT project_id FROM files WHERE id = _id INTO _project_id;
+	IF EXISTS(SELECT id FROM files WHERE id <> _id AND name = _new_name AND project_id = _project_id) THEN
 		RETURN -3;
 	END IF;
+	UPDATE files SET name = _new_name WHERE id = _id;
+	RETURN 0;
 END;
 $body$;
 
