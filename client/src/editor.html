@@ -10,7 +10,7 @@
 <main>
 	<div class="content-wrapper">
 		<div id="option-panel">
-			<select id="theme-selector">
+			<label for="theme-selector"><span>Theme</span></label><select id="theme-selector">
 				<option value="ambiance">Ambiance</option>
 				<option value="chaos">Chaos</option>
 				<option value="chrome">Chrome</option>
@@ -53,23 +53,15 @@
 		</div>
 		<div class="editor-wrapper">
 			<div id="project-structure">
-				<h3>Project name</h3>
-				<ul id="files-list">
-					<li>
-						<div>
-							<img src="img/file-icon.png" class="icon">
-							<span class="file-name-label">File one</span>
-							<span>
-								<button data-id="file-id" class="red-button">
-									<img src="img/trash-icon.png" class="icon">
-								</button>
-							</span>
-						</div>
-					</li>
-					<li>File 2</li>
-					<li>File 3</li>
-					<li>File 4</li>
-					<li>File 5</li>
+				<h3 id="project-name">Project name</h3>
+				<p id="project-description">Description</p>
+				<hr>
+				<h3>Files</h3>
+				<div id="new-file-form">
+					<input id="new-file-name" placeholder="new file name">
+					<button>Create</button>
+				</div>
+				<ul id="project-files-list">
 				</ul>
 			</div>
 			<div id="editor"></div>
@@ -85,7 +77,7 @@
 	</div>
 </main>
 <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="js/editor.js">
+<script src="js/editor.js" type="module">
 
 </script>
 </body>

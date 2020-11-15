@@ -1,14 +1,15 @@
 import EditorView from "./editorView.js";
 import FilesRepository from "./filesRepository.js";
-import File from "./filesRepository.js";
-import ProjectRepository from "./projectRepository";
+import {File} from "./filesRepository.js";
+import ProjectRepository from "./projectRepository.js";
 
 const EDITOR_STATES = Object.freeze({
 	LOADING_PROJECT_STRUCTURE: 0,
 	NO_FILE_OPENED: 1,
-	FILE_OPENED:2,
-	LOADING_FILE_CONTENT:3,
+	FILE_OPENED: 2,
+	LOADING_FILE_CONTENT: 3,
 	EDITING_FILE: 4,
+	ERROR: 5
 
 })
 
@@ -80,6 +81,16 @@ export default class EditorController {
 		this.view = view;
 		this.projectsRepository = new ProjectRepository();
 		this.filesRepository = new FilesRepository();
+		this.init();
+	}
+
+	/**
+	 * Tries to load project data and begin project editor session
+	 * @return {Promise<void>}
+	 */
+	async init() {
+		this.connect(1)
+
 	}
 
 	async loadProject() {
@@ -88,7 +99,8 @@ export default class EditorController {
 
 	/**
 	 * Will try to create new file in project. Operation will fail if there already is file with same name
-	 * in this projct
+	 * in this project
+	 *
 	 * @param name {string}
 	 * @return {Promise<void>}
 	 */
@@ -129,5 +141,43 @@ export default class EditorController {
 	 */
 	async sendMessage(message) {
 		//TODO*
+	}
+
+	connect = (projectId) => {
+		this.disconnect()
+		const wsUri =
+			(window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
+			"localhost:5000" +
+			//window.location.host +
+			'/projects/' + projectId + "/edit"
+		console.log("Logging to project session " + projectId)
+		this.webosocket = new WebSocket(wsUri)
+		console.log('Connecting...')
+
+		const t = this;
+		this.webosocket.onopen = function () {
+			console.log('Connected.')
+			t.state = EDITOR_STATES.NO_FILE_OPENED
+		}
+
+		this.webosocket.onmessage = function (e) {
+			console.log('Received: ' + e.data)
+			t.parseMessage(e.data);
+		}
+
+		this.webosocket.onclose = function () {
+			console.log('Disconnected.')
+			t.webosocket = null
+		}
+	}
+	parseMessage = (message) => {
+
+	}
+	disconnect = () => {
+		if (this.webosocket) {
+			console.log('Disconnecting...')
+			this.webosocket.close()
+			this.webosocket = null
+		}
 	}
 }

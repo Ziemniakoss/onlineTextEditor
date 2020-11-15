@@ -1,14 +1,19 @@
 use actix_web::body::{Body};
-use actix_web::{get, post, delete, web, HttpResponse, Result};
+use actix_web::{get, post, delete, web, HttpResponse, Result, HttpRequest, App, HttpServer, Error};
 use actix_session::Session;
 use crate::session_manager::get_user_id;
-use actix_http::http::StatusCode;
+use actix_http::http::{StatusCode};
 use serde::Deserialize;
 use crate::repositories::users::{get_user};
 use crate::services::projects;
 use log::{error, warn};
 use crate::services::projects::{SaveError, AccessGrantingError, GetError, AccessRevokingError};
 use crate::models::{Project, User};
+use actix::*;
+use actix_web_actors::ws;
+use crate::editor_session::EditorSession;
+use crate::server;
+use std::time::Instant;
 
 #[derive(Deserialize, Debug)]
 pub struct ProjectCreationDto {
@@ -171,9 +176,9 @@ pub async fn revoke_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sess
 				.body("Project does not exist or you dont have access to id");
 		}
 	}
-	return match service.revoke_access(&project, &user_to_grant_access){
+	return match service.revoke_access(&project, &user_to_grant_access) {
 		Ok(_) => response_builder.body("ok"),
-		Err(error) =>{
+		Err(error) => {
 			match error {
 				AccessRevokingError::IsOwner => response_builder
 					.status(StatusCode::BAD_REQUEST)
@@ -186,7 +191,7 @@ pub async fn revoke_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sess
 					.body("This user does not exist")
 			}
 		}
-	}
+	};
 }
 
 #[post("/projects/{id}/access/{user_id}")]
@@ -233,6 +238,22 @@ pub async fn grant_access(web::Path((id, user_id)): web::Path<(i32, i32)>, sessi
 	};
 }
 
-pub async fn start_editing_session(){
-
+#[get("/projects/{id}/edit")]
+pub async fn begin_editor_session(
+	req: HttpRequest,
+	stream: web::Payload,
+	srv: web::Data<Addr<server::EditorServer>>,
+	project_id: web::Path<i32>,
+) -> Result<HttpResponse, Error> {
+	println!("{}", project_id);
+	ws::start(
+		EditorSession {
+			id: 0,
+			hb: Instant::now(),
+			project_id: project_id.0,
+			addr: srv.get_ref().clone(),
+		},
+		&req,
+		stream,
+	)
 }

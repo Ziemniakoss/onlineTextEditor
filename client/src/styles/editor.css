@@ -7,11 +7,10 @@
 
 #editor {
 	height: 100%;
-	width: 90%;
+	width: 80%;
 }
 
 #project-structure {
-	width: 10%;
 }
 
 .content-wrapper {
@@ -32,4 +31,9 @@ html, body, main {
 #files-list{
 	list-style: none;
 	padding: 0;
+}
+
+#new-file-form{
+	display: flex;
+	flex-direction: row;
 }

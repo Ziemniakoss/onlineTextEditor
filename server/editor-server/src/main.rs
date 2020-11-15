@@ -6,6 +6,9 @@ use actix_cors::Cors;
 use actix_http::cookie::SameSite;
 use actix_session::CookieSession;
 use log::{info};
+use editor_server::server::EditorServer;
+use actix::Actor;
+
 
 const SERVER_ADDR: &str = "0.0.0.0:5000";
 
@@ -36,6 +39,8 @@ async fn main() -> std::io::Result<()> {
 			.service(projects::create_project)
 			.service(projects::grant_access)
 			.service(projects::revoke_access)
+			.service(projects::begin_editor_session)
+			.data(EditorServer::default().start())
 
 			.service(users::register)
 			.service(users::login)
