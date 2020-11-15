@@ -36,3 +36,17 @@ impl PartialEq for Project {
 		self.id == other.id
 	}
 }
+
+#[derive(Serialize)]
+pub struct ProjectFile{
+	pub id: Option<i32>,
+	pub name: String,
+	pub project_id: i32
+}
+
+impl PartialEq for ProjectFile {
+	fn eq(&self, other: &Self) -> bool {
+		self.id == other.id
+	}
+}
+

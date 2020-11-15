@@ -4,7 +4,7 @@ use std::env;
 
 pub mod users;
 pub mod projects;
-pub mod files;
+pub mod projects_files;
 
 fn get_client() -> Client {
 	let password = env::var("ONLINE_EDITOR_DATABASE_PASSWORD").expect("SET \"ONLINE_EDITOR_DATABASE_PASSWORD\" env variable");
