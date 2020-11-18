@@ -37,4 +37,9 @@ export class File{
 	 * @type {string}
 	 */
 	name;
+
+	constructor(id, name) {
+		this.id = id;
+		this.name = name;
+	}
 }

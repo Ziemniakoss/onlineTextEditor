@@ -1,18 +1,24 @@
 import EditorController from "./editorController.js";
 import {Project} from  "./projectRepository.js";
+import {File} from "./filesRepository.js";
+
 
 export default class EditorView{
 	/**
 	 * Controller for this view
+	 *
 	 * @type {EditorController}
 	 */
 	controller;
+
+	editor;
 
 	constructor() {
 		this.controller = new EditorController(this);
 		this.editor = ace.edit("editor");
 		this.init()
 	}
+
 	init(){
 		document.getElementById("theme-selector").addEventListener("change", (event) => {
 			const newTheme = event.target.value
@@ -21,6 +27,11 @@ export default class EditorView{
 		})
 		this.selectInitialTheme();
 		this.editor.session.setMode("ace/mode/text");
+
+		this.editor.session.on("change",  (e)=>{
+			console.log("a")
+			t.insert({row: 0, column: 0},";;;");
+		})
 	}
 
 	selectInitialTheme() {
@@ -44,8 +55,29 @@ export default class EditorView{
 		alert(message);
 	}
 
+	/**
+	 * Displays files in left panel
+	 *
+	 * @param files {File []}
+	 */
 	showFilesList(files){
+		const listElement = document.getElementById("project-files-list");
+		while(listElement.firstChild){
+			listElement.removeChild(listElement.firstChild);
+		}
 
+		files.forEach(file=>{
+			/** @type {HTMLLIElement}*/
+			const fileListElement = document.createElement("li");
+			fileListElement.innerText = file.name;
+			fileListElement.dataset["id"] = "" + file.id;
+			fileListElement.onclick = this.handleFileClick
+			listElement.appendChild(fileListElement);
+		})
+	}
+
+	handleFileClick(event){
+		console.log(event.target.dataset.id)
 	}
 
 	/**

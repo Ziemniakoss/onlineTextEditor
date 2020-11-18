@@ -2,6 +2,7 @@ import EditorView from "./editorView.js";
 import FilesRepository from "./filesRepository.js";
 import {File} from "./filesRepository.js";
 import ProjectRepository from "./projectRepository.js";
+import {Project} from "./projectRepository.js";
 
 const EDITOR_STATES = Object.freeze({
 	LOADING_PROJECT_STRUCTURE: 0,
@@ -90,7 +91,14 @@ export default class EditorController {
 	 */
 	async init() {
 		this.connect(1)
-
+		this.view.showFilesList([
+			new File(1, "File 1"),
+			new File(2, "File 2"),
+			new File(3, "File 3"),
+			new File(4, "File 4"),
+			new File(5, "File 5")
+		])
+		this.view.showProjectInfo(new Project(1, "Testowy projekt","Testowy opis", {id:1,name:"Ala"}))
 	}
 
 	async loadProject() {
