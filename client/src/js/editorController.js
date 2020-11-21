@@ -29,11 +29,6 @@ export default class EditorController {
 	websocket;
 
 	/**
-	 * Ace editor.
-	 */
-	editor;
-
-	/**
 	 * List of files in edited project
 	 *
 	 * @type {File []}
@@ -106,14 +101,15 @@ export default class EditorController {
 	}
 
 	/**
-	 * Will try to create new file in project. Operation will fail if there already is file with same name
-	 * in this project
+	 * Will try to create new file in project. Opertaion will fal if network error occurs.
 	 *
 	 * @param name {string}
 	 * @return {Promise<void>}
 	 */
 	async createNewFile(name) {
-		//TODO
+		const fullMessage = "1" + name;
+		console.log(`Sending '${fullMessage}'`);
+		this.webosocket.send(fullMessage);
 
 	}
 

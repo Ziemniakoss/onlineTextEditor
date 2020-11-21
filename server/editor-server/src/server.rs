@@ -2,6 +2,8 @@
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 use std::collections::{HashMap, HashSet};
+use crate::editor_session;
+use crate::editor_session::FileCreationRequest;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -13,6 +15,7 @@ pub struct Connect {
 	pub addr: Recipient<Message>,
 	pub project_id:i32
 }
+
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -77,10 +80,10 @@ impl Actor for EditorServer {
 }
 
 /// Register new session and assign unique id to this session
-impl Handler<Connect> for EditorServer {
+impl Handler<editor_session::Connect> for EditorServer {
 	type Result = usize;
 
-	fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+	fn handle(&mut self, msg: editor_session::Connect, _: &mut Context<Self>) -> Self::Result {
 		println!("Someone joined");
 
 		// notify all users in same room
@@ -88,33 +91,31 @@ impl Handler<Connect> for EditorServer {
 
 		// register session with random id
 		let id = self.rng.gen::<usize>();
-		self.sessions.insert(id, msg.addr);
+		self.sessions.insert(id, msg.addr.recipient());
 
 		// auto join session to Main room
 		self.rooms
 			.entry(msg.project_id)
 			.or_insert_with(HashSet::new)
 			.insert(id);
-
-		// send id back
 		id
 	}
 }
 
 /// Handler for Disconnect message.
-impl Handler<Disconnect> for EditorServer {
+impl Handler<editor_session::Disconnect> for EditorServer {
 	type Result = ();
 
-	fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+	fn handle(&mut self, msg: editor_session::Disconnect, _: &mut Context<Self>) {
 		println!("Someone disconnected");
 
 		let mut rooms: Vec<i32> = Vec::new();
 
 		// remove address
-		if self.sessions.remove(&msg.id).is_some() {
+		if self.sessions.remove(&msg.session_id).is_some() {
 			// remove session from all rooms
 			for (name, sessions) in &mut self.rooms {
-				if sessions.remove(&msg.id) {
+				if sessions.remove(&msg.session_id) {
 					rooms.push(name.to_owned());
 				}
 			}
@@ -123,6 +124,14 @@ impl Handler<Disconnect> for EditorServer {
 		for room in rooms {
 			self.send_message(room, "Someone disconnected", 0);
 		}
+	}
+}
+
+impl Handler<editor_session::FileCreationRequest> for EditorServer{
+	type Result = ();
+
+	fn handle(&mut self, msg: FileCreationRequest, ctx: &mut Context<Self>) -> Self::Result {
+
 	}
 }
 

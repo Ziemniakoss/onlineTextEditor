@@ -32,6 +32,11 @@ export default class EditorView{
 			console.log("a")
 			t.insert({row: 0, column: 0},";;;");
 		})
+
+		document.getElementById("new-file-button").addEventListener("click", (_) =>{
+			const newName = document.getElementById("new-file-name").value;
+			this.controller.createNewFile(newName);
+		})
 	}
 
 	selectInitialTheme() {

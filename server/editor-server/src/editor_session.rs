@@ -3,6 +3,13 @@ use std::time::{Duration, Instant};
 use actix::*;
 use actix_web_actors::ws;
 use crate::server;
+use rand::rngs::StdRng;
+
+
+const INCOMING_CODE_NEW_FILE: &str = "1";
+const INCOMING_CODE_DELETE_FILE: &str = "2";
+const INCOMING_CODE_RENAME_FILE: &str = "3";
+const INCOMING_CODE_CHANGE_IN_FILE: &str = "5";
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -16,6 +23,50 @@ pub struct EditorSession {
 	pub project_id: i32,
 	/// Editor server
 	pub addr: Addr<server::EditorServer>,
+}
+
+#[derive(Message)]
+#[rtype(usize)]
+pub struct Connect {
+	pub addr: Addr<EditorSession>,
+	pub project_id: i32,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Disconnect{
+	pub session_id: usize
+}
+
+//TODO
+#[derive(Message)]
+#[rtype(result = "()")]
+
+pub struct IncomingChange {
+	pub session_id: usize,
+	pub file_id: i32
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct FileCreationRequest {
+	pub session_id: usize,
+	pub filename: String
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct FileDeletionRequest {
+	pub session_id:usize,
+	pub file_id: i32
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct FileNameChangeRequest {
+	pub session_id: usize,
+	pub file_id: i32,
+	pub new_filename: String
 }
 
 impl Actor for EditorSession {
@@ -32,8 +83,8 @@ impl Actor for EditorSession {
 		// across all routes within application
 		let addr = ctx.address();
 		self.addr
-			.send(server::Connect {
-				addr: addr.recipient(),
+			.send(Connect {
+				addr: addr,//.recipient(),
 				project_id: self.project_id,
 			})
 			.into_actor(self)
@@ -50,7 +101,7 @@ impl Actor for EditorSession {
 
 	fn stopping(&mut self, _: &mut Self::Context) -> Running {
 		// notify chat server
-		self.addr.do_send(server::Disconnect { id: self.id });
+		self.addr.do_send(Disconnect { session_id: self.id });
 		Running::Stop
 	}
 }
@@ -92,45 +143,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 			ws::Message::Text(text) => {
 				let m = text.trim();
 				self.parse_message_and_send_to_server(text, ctx);
-				// // we check for /sss type of messages
-				// if m.starts_with('/') {
-				// 	let v: Vec<&str> = m.splitn(2, ' ').collect();
-				// 	match v[0] {
-				// 		"/join" => {
-				// 			if v.len() == 2 {
-				// 				self.project_id = v[1].parse().unwrap();
-				// 				self.addr.do_send(server::Join {
-				// 					id: self.id,
-				// 					project_id: self.project_id,
-				// 				});
-				//
-				// 				ctx.text("joined");
-				// 			} else {
-				// 				ctx.text("!!! room name is required");
-				// 			}
-				// 		}
-				// 		"/name" => {
-				// 			if v.len() == 2 {
-				// 				self.name = Some(v[1].to_owned());
-				// 			} else {
-				// 				ctx.text("!!! name is required");
-				// 			}
-				// 		}
-				// 		_ => ctx.text(format!("!!! unknown command: {:?}", m)),
-				// 	}
-				// } else {
-				// 	let msg = if let Some(ref name) = self.name {
-				// 		format!("{}: {}", name, m)
-				// 	} else {
-				// 		m.to_owned()
-				// 	};
-				// 	// send message to chat server
-				// 	self.addr.do_send(server::ClientMessage {
-				// 		id: self.id,
-				// 		msg,
-				// 		project_id: self.project_id.clone(),
-				// 	})
-				// }
 			}
 			ws::Message::Binary(_) => println!("Unexpected binary"),
 			ws::Message::Close(reason) => {
@@ -145,12 +157,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	}
 }
 
-const INCOMING_CODE_NEW_FILE: &str = "1";
-const INCOMING_CODE_DELETE_FILE: &str = "2";
-const INCOMING_CODE_RENAME_FILE: &str = "3";
-const INCOMING_CODE_MESSAGE: &str = "4";
-const INCOMING_CODE_CHANGE_IN_FILE: &str = "5";
-
 impl EditorSession {
 	fn parse_message_and_send_to_server(&self, message: String, ctx: &mut ws::WebsocketContext<Self>) {
 		if message.len() == 0 {
@@ -160,10 +166,14 @@ impl EditorSession {
 		match incoming_code {
 			INCOMING_CODE_NEW_FILE => {
 				println!("New file req, file name {}", incoming_message);
+				self.addr.do_send(FileCreationRequest{
+					session_id: self.id,
+					filename: incoming_message.to_owned()
+				})
 			}
 			INCOMING_CODE_DELETE_FILE => {
 				let file_id;
-				match incoming_message.parse::<i32>(){
+				match incoming_message.parse::<i32>() {
 					Ok(id) => file_id = id,
 					Err(_) => {
 						println!("Inparsable file id");
@@ -177,15 +187,15 @@ impl EditorSession {
 			}
 			INCOMING_CODE_MESSAGE => {
 				println!("New message: {}", incoming_message);
-				self.addr.do_send(server::ClientMessage{
+				self.addr.do_send(server::ClientMessage {
 					id: self.id,
 					msg: incoming_message.to_owned(),
-					project_id: self.project_id
+					project_id: self.project_id,
 				});
 			}
 			INCOMING_CODE_CHANGE_IN_FILE => {}
 			_ => {
-				println!("Unknown first char: {}", incoming_code);
+				println!("Unknown first char: {} of message in session {}", incoming_code, self.id);
 			}
 		}
 	}
@@ -201,7 +211,7 @@ impl EditorSession {
 				println!("Websocket Client heartbeat failed, disconnecting!");
 
 				// notify chat server
-				act.addr.do_send(server::Disconnect { id: act.id });
+				act.addr.do_send(Disconnect { session_id: act.id });
 
 				// stop actor
 				ctx.stop();

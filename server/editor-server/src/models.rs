@@ -2,6 +2,7 @@ use serde::Serialize;
 use postgres::types::IsNull::No;
 
 #[derive(Serialize)]
+#[derive(Clone)]
 pub struct User {
 	pub id: i32,
 	pub name: String,
@@ -13,6 +14,7 @@ impl PartialEq for User {
 	}
 }
 
+#[derive(Clone)]
 #[derive(Serialize)]
 pub struct Project {
 	pub id: Option<i32>,
@@ -37,7 +39,7 @@ impl PartialEq for Project {
 		self.id == other.id
 	}
 }
-
+#[derive(Clone)]
 #[derive(Serialize)]
 pub struct ProjectFile {
 	pub id: Option<i32>,
