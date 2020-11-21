@@ -1,5 +1,4 @@
 use serde::Serialize;
-use postgres::types::IsNull::No;
 
 #[derive(Serialize)]
 #[derive(Clone)]

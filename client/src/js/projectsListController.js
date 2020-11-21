@@ -22,7 +22,11 @@ export default class ProjectsListController {
 	async loadProjects() {
 		const myProjectsRequest = this.projectsRepository.getAllOwned();
 		const sharedProjectsRequest = await this.projectsRepository.getAllSharedTo();
-		this.view.showMyProjects(await  myProjectsRequest);
+		this.view.showMyProjects(await myProjectsRequest);
 		this.view.showSharedProjects(await sharedProjectsRequest);
+	}
+
+	showProjectEditionSession(projectId) {
+		window.location = `editor.html?project_id=${projectId}`
 	}
 }

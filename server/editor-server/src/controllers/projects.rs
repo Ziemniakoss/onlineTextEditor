@@ -1,19 +1,19 @@
 use actix_web::body::{Body};
-use actix_web::{get, post, delete, web, HttpResponse, Result, HttpRequest, App, HttpServer, Error};
+use actix_web::{get, post, delete, web, HttpResponse, Result, HttpRequest, Error};
 use actix_session::Session;
 use crate::session_manager::get_user_id;
 use actix_http::http::{StatusCode};
 use serde::Deserialize;
 use crate::repositories::users::{get_user};
 use crate::services::projects;
-use log::{error, warn};
-use crate::services::projects::{SaveError, AccessGrantingError, GetError, AccessRevokingError};
-use crate::models::{Project, User};
+use log::{error, warn, info};
+use crate::services::projects::{SaveError, AccessGrantingError, AccessRevokingError, GetError};
 use actix::*;
 use actix_web_actors::ws;
 use crate::editor_session::EditorSession;
 use crate::server;
 use std::time::Instant;
+use crate::models::Project;
 
 #[derive(Deserialize, Debug)]
 pub struct ProjectCreationDto {
@@ -244,11 +244,28 @@ pub async fn begin_editor_session(
 	stream: web::Payload,
 	srv: web::Data<Addr<server::EditorServer>>,
 	project_id: web::Path<i32>,
+	session: Session
 ) -> Result<HttpResponse, Error> {
-	println!("{}", project_id);
+	let user;
+	match get_user_id(&session){
+		Some(id) => user = get_user(id).expect("Non existing user tryied to make session"),
+		None => {
+			warn!("Non logged in user tried to create edition session");
+			return Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).body("Log in first"));
+		}
+	}
+	let  service= projects::new(user.clone());
+	match service.get(project_id.0){
+		Err(_) => {
+			warn!("User {} tried to start editor session on project {}, which does not exists or is unavabile to user", user.id, project_id.0);
+			return Ok(HttpResponse::build(StatusCode::NOT_FOUND).body("Project does not exist or you dont have access to it"));
+		}
+		Ok(_) => {}
+	}
 	ws::start(
 		EditorSession {
 			id: 0,
+			user,
 			hb: Instant::now(),
 			project_id: project_id.0,
 			addr: srv.get_ref().clone(),

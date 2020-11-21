@@ -85,7 +85,8 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async init() {
-		this.connect(1)
+		const projectId = new URL(window.location).searchParams.get("project_id")
+		this.connect(projectId)
 		this.view.showFilesList([
 			new File(1, "File 1"),
 			new File(2, "File 2"),
@@ -155,7 +156,12 @@ export default class EditorController {
 			//window.location.host +
 			'/projects/' + projectId + "/edit"
 		console.log("Logging to project session " + projectId)
-		this.webosocket = new WebSocket(wsUri)
+		try {
+			this.webosocket = new WebSocket(wsUri)
+		}catch (e){
+			console.error("aaa")
+			this.view.showError(JSON.stringify(e));
+		}
 		console.log('Connecting...')
 
 		const t = this;
@@ -173,8 +179,13 @@ export default class EditorController {
 			console.log('Disconnected.')
 			t.webosocket = null
 		}
+
+		this.webosocket.onerror = (e) =>{
+			this.view.showError("Please make sure you are logged in and you have access to this project");
+		}
 	}
 	parseMessage = (message) => {
+		console.log(`Recived message: '${message}'`)
 
 	}
 	disconnect = () => {

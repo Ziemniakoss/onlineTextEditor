@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use actix::*;
 use actix_web_actors::ws;
 use crate::server;
-use rand::rngs::StdRng;
+use crate::models::User;
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
@@ -21,6 +21,7 @@ pub struct EditorSession {
 	/// otherwise we drop connection.
 	pub hb: Instant,
 	pub project_id: i32,
+	pub user: User,
 	/// Editor server
 	pub addr: Addr<server::EditorServer>,
 }
@@ -184,14 +185,6 @@ impl EditorSession {
 			}
 			INCOMING_CODE_RENAME_FILE => {
 				println!("Rename file request");
-			}
-			INCOMING_CODE_MESSAGE => {
-				println!("New message: {}", incoming_message);
-				self.addr.do_send(server::ClientMessage {
-					id: self.id,
-					msg: incoming_message.to_owned(),
-					project_id: self.project_id,
-				});
 			}
 			INCOMING_CODE_CHANGE_IN_FILE => {}
 			_ => {

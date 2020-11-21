@@ -1,7 +1,7 @@
 use crate::models::{ProjectFile, Project};
 use crate::repositories::get_client;
 use log::{info, warn, error};
-use postgres::{Row, Error};
+use postgres::{Row};
 
 /// Operates CRUD operations on files. Each IProjectsFilesRepository
 /// implementation must operate only on one project
@@ -57,7 +57,7 @@ impl IProjectsFilesRepository for ProjectFileRepository {
 		return match file.id {
 			Some(file_id) => {
 				let result_code: i32 = get_client()
-					.query_one("SELECT * FROM create_file($1, $2)", &[&file_id, &file.name])
+					.query_one("SELECT * FROM update_file($1, $2)", &[&file_id, &file.name])
 					.unwrap()
 					.get(0);
 				match result_code {

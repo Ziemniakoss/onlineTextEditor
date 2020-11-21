@@ -55,6 +55,8 @@ export default class ProjectsListView {
 		const openButton = document.createElement("button");
 		openButton.classList.add("option-button")
 		openButton.innerText = "Open";
+		console.log("aa");
+		openButton.addEventListener("click", (e) =>this.controller.showProjectEditionSession(project.id))
 		openButton.dataset["id"] = project.id + "";
 		buttonsCell.appendChild(openButton);
 
