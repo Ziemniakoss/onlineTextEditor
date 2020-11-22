@@ -4,6 +4,9 @@ use actix::*;
 use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
+use crate::server::{ProjectInfoDto, ErrorMessage};
+use serde_json::Error;
+use log::{error};
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
@@ -16,7 +19,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct EditorSession {
 	/// unique session id
-	pub id: usize,
+	pub id: i32,
 	/// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
 	/// otherwise we drop connection.
 	pub hb: Instant,
@@ -27,7 +30,7 @@ pub struct EditorSession {
 }
 
 #[derive(Message)]
-#[rtype(usize)]
+#[rtype(i32)]
 pub struct Connect {
 	pub addr: Addr<EditorSession>,
 	pub project_id: i32,
@@ -37,35 +40,35 @@ pub struct Connect {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
-	pub session_id: usize
+	pub session_id: i32
 }
 
 //TODO
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct IncomingChange {
-	pub session_id: usize,
+	pub session_id: i32,
 	pub file_id: i32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileCreationRequest {
-	pub session_id: usize,
+	pub session_id: i32,
 	pub filename: String,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileDeletionRequest {
-	pub session_id: usize,
+	pub session_id: i32,
 	pub file_id: i32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileNameChangeRequest {
-	pub session_id: usize,
+	pub session_id: i32,
 	pub file_id: i32,
 	pub new_filename: String,
 }
@@ -112,6 +115,27 @@ impl Handler<server::Message> for EditorSession {
 	}
 }
 
+impl Handler<server::ProjectInfoDto> for EditorSession{
+	type Result = ();
+
+	fn handle(&mut self, msg: ProjectInfoDto, ctx: &mut Self::Context) -> Self::Result {
+		match serde_json::to_string(&msg){
+			Ok(json) => ctx.text(format!("9{}", json)),
+			Err(err) => {
+				error!("Error while serializing ProjectInfoDto: {}", err);
+			}
+		}
+	}
+}
+
+impl Handler<server::ErrorMessage> for EditorSession{
+	type Result = ();
+
+	fn handle(&mut self, msg: ErrorMessage, ctx: &mut Self::Context) -> Self::Result {
+		ctx.text(format!("a{}", msg.msg));
+	}
+}
+
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	fn handle(
@@ -154,7 +178,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 }
 
 impl EditorSession {
-	fn parse_message_and_send_to_server(&self, message: String, ctx: &mut ws::WebsocketContext<Self>) {
+	fn parse_message_and_send_to_server(&self, message: String, _: &mut ws::WebsocketContext<Self>) {
 		if message.len() == 0 {
 			println!("Empty message with no code");
 		}

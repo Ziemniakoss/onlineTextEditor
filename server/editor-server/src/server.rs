@@ -3,9 +3,15 @@ use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 use std::collections::{HashMap};
 use crate::editor_session;
-use crate::editor_session::{FileCreationRequest};
-use crate::models::User;
-use log::{info};
+use crate::editor_session::{FileCreationRequest, EditorSession};
+use crate::models::{User, Project, ProjectFile};
+use log::{info, error, warn};
+use serde::Serialize;
+use crate::repositories::users::get_user;
+use crate::services::projects::GetError;
+use crate::services::projects_files::{IProjectsFilesService, ServiceCreationError};
+use std::env::set_var;
+
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -22,36 +28,53 @@ pub struct Connect {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
-	pub id: usize,
+	pub id: i32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ClientMessage {
 	/// Id of the client session
-	pub id: usize,
+	pub id: i32,
 	/// Peer message
 	pub msg: String,
 	pub project_id: i32,
 }
 
-/// Join room, if room does not exists create new one.
+
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct Join {
-	pub id: usize,
-	pub project_id: i32,
+pub struct ErrorMessage {
+	pub msg: String
 }
 
 struct SessionData {
+	pub id: i32,
 	pub user: User,
 	pub project_id: i32,
-	pub recipient: Recipient<Message>,
+	pub recipient: Addr<EditorSession>,
 }
 
+#[derive(Message)]
+#[rtype(result = "()")]
 pub struct EditorServer {
-	sessions_2: HashMap<usize, SessionData>,
+	sessions_2: HashMap<i32, SessionData>,
 	rng: ThreadRng,
+}
+
+#[derive(Serialize)]
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ProjectInfoDto {
+	pub project: Project,
+	pub files: Vec<ProjectFile>,
+	pub sessions: Vec<SessionDataDto>,
+}
+
+#[derive(Serialize)]
+pub struct SessionDataDto {
+	id: i32,
+	name: String,
 }
 
 impl Default for EditorServer {
@@ -73,6 +96,51 @@ impl EditorServer {
 				let _ = session.recipient.do_send(Message(message.to_owned()));
 			});
 	}
+
+	/// Tries to send ProjectInfoDto to actor. If actor does not have access to project or this project
+	/// does not exist. It will send error message to actor and return false
+	///
+	/// # Returns
+	///  - false if this actor does not have access to this project or project does not exists.
+	/// - true otherwise
+	///
+	fn send_project_info(&self, addr: &Addr<EditorSession>, session_data: &SessionData) -> bool {
+		let projects_service = crate::services::projects::new(session_data.user.clone());
+		let project;
+		match projects_service.get(session_data.project_id) {
+			Ok(p) => project = p,
+			Err(_) => {
+				error!("Error while trying to get project for ProjectInfoDto: Project does not exists or user have no access");
+				self.send_error(addr, "You don't have access to this project or this project does not exist".to_owned());
+				return false;
+			}
+		}
+		let projects_files_service;
+		match crate::services::projects_files::new(session_data.user.id, project.id.unwrap()) {
+			Ok(service) => projects_files_service = service,
+			Err(_) => return false//already handled
+		}
+		let files = projects_files_service.get_all();
+		let mut sessions: Vec<SessionDataDto> = self.sessions_2.iter()
+			.map(|full_session_data| return SessionDataDto { id: full_session_data.0.to_owned(), name: full_session_data.1.user.name.clone() })
+			.collect();
+		sessions.push(SessionDataDto{
+			id: session_data.id,
+			name: session_data.user.name.clone()
+		});
+		addr.do_send(ProjectInfoDto {
+			project,
+			files,
+			sessions,
+		});
+		return true;
+	}
+
+	/// Sends error message to given actor
+	///
+	fn send_error(&self, addr: &Addr<EditorSession>, msg: String) {
+		addr.do_send(ErrorMessage { msg });
+	}
 }
 
 impl Actor for EditorServer {
@@ -81,22 +149,28 @@ impl Actor for EditorServer {
 
 /// Register new session and assign unique id to this session
 impl Handler<editor_session::Connect> for EditorServer {
-	type Result = usize;
+	type Result = i32;
 
 	fn handle(&mut self, msg: editor_session::Connect, _: &mut Context<Self>) -> Self::Result {
-		let id = self.rng.gen::<usize>();
-		self.sessions_2.insert(id, SessionData {
+		let id = self.rng.gen::<i32>();
+		self.send_message(msg.project_id, &format!("1{} {}", id, msg.user.name));
+
+		let session_data = SessionData {
+			id,
 			user: msg.user.clone(),
 			project_id: msg.project_id,
-			recipient: msg.addr.recipient(),
-		});
-		self.send_message(msg.project_id, &format!("1{} {}", id, msg.user.name));
-		println!("New session with id {}, current sessions {}", id, self.sessions_2.len());
+			recipient: msg.addr.clone(),
+		};
+		if self.send_project_info(&msg.addr, &session_data) {
+			self.sessions_2.insert(id, session_data);
+			println!("New session with id {}, current sessions {}", id, self.sessions_2.len());
+		}else{
+
+		}
 		id
 	}
 }
 
-/// Handler for Disconnect message.
 impl Handler<editor_session::Disconnect> for EditorServer {
 	type Result = ();
 

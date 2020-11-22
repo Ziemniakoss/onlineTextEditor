@@ -1,9 +1,9 @@
 import EditorController from "./editorController.js";
-import {Project} from  "./projectRepository.js";
+import {Project} from "./projectRepository.js";
 import {File} from "./filesRepository.js";
 
 
-export default class EditorView{
+export default class EditorView {
 	/**
 	 * Controller for this view
 	 *
@@ -19,7 +19,7 @@ export default class EditorView{
 		this.init()
 	}
 
-	init(){
+	init() {
 		document.getElementById("theme-selector").addEventListener("change", (event) => {
 			const newTheme = event.target.value
 			this.editor.setTheme(`ace/theme/${newTheme}`);
@@ -28,12 +28,12 @@ export default class EditorView{
 		this.selectInitialTheme();
 		this.editor.session.setMode("ace/mode/text");
 
-		this.editor.session.on("change",  (e)=>{
+		this.editor.session.on("change", (e) => {
 			console.log("a")
-			t.insert({row: 0, column: 0},";;;");
+			t.insert({row: 0, column: 0}, ";;;");
 		})
 
-		document.getElementById("new-file-button").addEventListener("click", (_) =>{
+		document.getElementById("new-file-button").addEventListener("click", (_) => {
 			const newName = document.getElementById("new-file-name").value;
 			this.controller.createNewFile(newName);
 		})
@@ -55,9 +55,30 @@ export default class EditorView{
 	 *
 	 * @param message {string}
 	 */
-	showError(message){
+	showError(message) {
 		console.error(message);
 		alert(message);
+	}
+
+
+	/**
+	 * Show session list
+	 *
+	 * @param {IterableIterator} sessions
+	 * @param {string} sessions[].id id of session
+	 * @param {string} sessions[].name name of user in this session
+	 */
+	showSessions(sessions) {
+		let sessionListElement = document.getElementById("users-list");
+		while(sessionListElement.firstChild) {
+			sessionListElement.removeChild(sessionListElement.firstChild);
+		}
+		for (const session of sessions) {
+			console.log(JSON.stringify(session))
+			const sessionDomElement = document.createElement("li");
+			sessionDomElement.textContent = session.name;
+			sessionListElement.appendChild(sessionDomElement);
+		}
 	}
 
 	/**
@@ -65,13 +86,13 @@ export default class EditorView{
 	 *
 	 * @param files {File []}
 	 */
-	showFilesList(files){
+	showFilesList(files) {
 		const listElement = document.getElementById("project-files-list");
-		while(listElement.firstChild){
+		while (listElement.firstChild) {
 			listElement.removeChild(listElement.firstChild);
 		}
 
-		files.forEach(file=>{
+		files.forEach(file => {
 			/** @type {HTMLLIElement}*/
 			const fileListElement = document.createElement("li");
 			fileListElement.innerText = file.name;
@@ -81,7 +102,7 @@ export default class EditorView{
 		})
 	}
 
-	handleFileClick(event){
+	handleFileClick(event) {
 		console.log(event.target.dataset.id)
 	}
 
@@ -89,7 +110,7 @@ export default class EditorView{
 	 *
 	 * @param project {Project}
 	 */
-	showProjectInfo(project){
+	showProjectInfo(project) {
 		document.getElementById("project-name").innerText = project.name
 		document.getElementById("project-description").innerText = project.description
 
@@ -275,6 +296,7 @@ const extensionToLanguageMap = {
 const specialFileTypesToMode = {
 	"DOCKERFILE": "dockerfile"
 }
+
 function getModeForFileExtension(fileExtension) {
 	if (!fileExtension) {
 		return "text";

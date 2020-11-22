@@ -71,6 +71,14 @@ export default class EditorController {
 	filesRepository;
 
 	/**
+	 * Map of all active sessions editing this project. Keys are session ids and
+	 * values are objects with 2 fields: id and name.
+	 *
+	 * @type {Map.<string, object>}
+	 */
+	sessions
+
+	/**
 	 * Creates new controller for editor
 	 *
 	 * @param view {EditorView}
@@ -89,18 +97,6 @@ export default class EditorController {
 	async init() {
 		const projectId = new URL(window.location).searchParams.get("project_id")
 		this.connect(projectId)
-		this.view.showFilesList([
-			new File(1, "File 1"),
-			new File(2, "File 2"),
-			new File(3, "File 3"),
-			new File(4, "File 4"),
-			new File(5, "File 5")
-		])
-		this.view.showProjectInfo(new Project(1, "Testowy projekt","Testowy opis", {id:1,name:"Ala"}))
-	}
-
-	async loadProject() {
-		//TODO
 	}
 
 	/**
@@ -145,7 +141,7 @@ export default class EditorController {
 		console.log("Logging to project session " + projectId)
 		try {
 			this.webosocket = new WebSocket(wsUri)
-		}catch (e){
+		} catch (e) {
 			this.view.showError(JSON.stringify(e));
 		}
 		console.log('Connecting...')
@@ -165,14 +161,86 @@ export default class EditorController {
 			t.webosocket = null
 		}
 
-		this.webosocket.onerror = (e) =>{
+		this.webosocket.onerror = (e) => {
 			this.view.showError("Please make sure you are logged in and you have access to this project");
 		}
 	}
 	parseMessage = (message) => {
 		console.log(`Received message: '${message}'`)
+		switch (message[0]) {
+			case "1":
+				this._handleNewSessionPackage(message.substring(1));
+				break;
+			case "2":
+				this._handleSessionDisconnectedPackage(message.substring(1));
+				break;
+			case "9":
+				this._handleProjectData(JSON.parse(message.substring(1)));
+				break;
+		}
 
 	}
+
+	/**
+	 *
+	 * @param {string} sessionId
+	 * @private
+	 */
+	_handleSessionDisconnectedPackage(sessionId){
+		this.sessions.forEach((val, key) =>{
+			console.log(`${key} ses ${val.name} ${key === val.id}`)
+		})
+		this.sessions.delete(sessionId);
+		this.view.showSessions(this.sessions.values());
+	}
+
+	/**
+	 *
+	 * @param {string} message Message containing id and name of user separated by space
+	 * @private
+	 */
+	_handleNewSessionPackage(message){
+		const indexOfFirstSpace = message.indexOf(" ");
+		const sessionId = message.substring(0, indexOfFirstSpace);
+		const name = message.substring(indexOfFirstSpace + 1);
+		this.sessions.set(sessionId, {
+			id: sessionId,
+			name: name
+		});
+		this.view.showSessions(this.sessions.values());
+	}
+
+	/**
+	 * Display project data
+	 *
+	 * @param projectData {object}
+	 * @param {Project} projectData.project
+	 * @param {object[]} projectData.sessions list of active session(containing current session)
+	 * @param {string} projectData.sessions[].id id of session
+	 * @param {string} projectData.sessions[].name  Name of user for given session
+	 * @param {object []} projectData.files list of files in this project
+	 * @param {number} projectData.files[].id id of file
+	 * @param {string} projectData.files[].name name of file
+	 * @private
+	 */
+	_handleProjectData(projectData) {
+		this.sessions = new Map();
+		projectData.sessions.forEach(session =>{
+			this.sessions.set(session.id, session);
+		})
+		this.view.showSessions(this.sessions.values());
+
+		this.project = projectData.project;
+		this.view.showProjectInfo(this.project);
+
+		if(projectData.files != null){
+			this.files = projectData.files;
+		}else{
+			this.files = [];
+		}
+		this.view.showFilesList(this.files);
+	}
+
 	disconnect = () => {
 		if (this.webosocket) {
 			console.log('Disconnecting...')
