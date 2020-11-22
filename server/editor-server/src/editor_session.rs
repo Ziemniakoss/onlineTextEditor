@@ -31,35 +31,35 @@ pub struct EditorSession {
 pub struct Connect {
 	pub addr: Addr<EditorSession>,
 	pub project_id: i32,
+	pub user: User
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct Disconnect{
+pub struct Disconnect {
 	pub session_id: usize
 }
 
 //TODO
 #[derive(Message)]
 #[rtype(result = "()")]
-
 pub struct IncomingChange {
 	pub session_id: usize,
-	pub file_id: i32
+	pub file_id: i32,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileCreationRequest {
 	pub session_id: usize,
-	pub filename: String
+	pub filename: String,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileDeletionRequest {
-	pub session_id:usize,
-	pub file_id: i32
+	pub session_id: usize,
+	pub file_id: i32,
 }
 
 #[derive(Message)]
@@ -67,7 +67,7 @@ pub struct FileDeletionRequest {
 pub struct FileNameChangeRequest {
 	pub session_id: usize,
 	pub file_id: i32,
-	pub new_filename: String
+	pub new_filename: String,
 }
 
 impl Actor for EditorSession {
@@ -77,16 +77,12 @@ impl Actor for EditorSession {
 		// we'll start heartbeat process on session start.
 		self.heart_beat(ctx);
 
-		// register self in chat server. `AsyncContext::wait` register
-		// future within context, but context waits until this future resolves
-		// before processing any other events.
-		// HttpContext::state() is instance of WsChatSessionState, state is shared
-		// across all routes within application
 		let addr = ctx.address();
 		self.addr
 			.send(Connect {
-				addr: addr,//.recipient(),
+				addr,
 				project_id: self.project_id,
+				user: self.user.clone()
 			})
 			.into_actor(self)
 			.then(|res, act, ctx| {
@@ -132,7 +128,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 			Ok(msg) => msg,
 		};
 
-		println!("WEBSOCKET MESSAGE: {:?}", msg);
+		// println!("WEBSOCKET MESSAGE: {:?}", msg);
 		match msg {
 			ws::Message::Ping(msg) => {
 				self.hb = Instant::now();
@@ -142,7 +138,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 				self.hb = Instant::now();
 			}
 			ws::Message::Text(text) => {
-				let m = text.trim();
 				self.parse_message_and_send_to_server(text, ctx);
 			}
 			ws::Message::Binary(_) => println!("Unexpected binary"),
@@ -167,9 +162,9 @@ impl EditorSession {
 		match incoming_code {
 			INCOMING_CODE_NEW_FILE => {
 				println!("New file req, file name {}", incoming_message);
-				self.addr.do_send(FileCreationRequest{
+				self.addr.do_send(FileCreationRequest {
 					session_id: self.id,
-					filename: incoming_message.to_owned()
+					filename: incoming_message.to_owned(),
 				})
 			}
 			INCOMING_CODE_DELETE_FILE => {

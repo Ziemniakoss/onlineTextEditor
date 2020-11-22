@@ -7,7 +7,7 @@ use serde::Deserialize;
 use crate::repositories::users::{get_user};
 use crate::services::projects;
 use log::{error, warn, info};
-use crate::services::projects::{SaveError, AccessGrantingError, AccessRevokingError, GetError};
+use crate::services::projects::{SaveError, AccessGrantingError, AccessRevokingError};
 use actix::*;
 use actix_web_actors::ws;
 use crate::editor_session::EditorSession;
