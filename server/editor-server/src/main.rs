@@ -19,7 +19,8 @@ async fn main() -> std::io::Result<()> {
 		.init();
 	info!("Starting server at {}", SERVER_ADDR);
 
-	HttpServer::new(|| {
+	let server = EditorServer::default().start();
+	HttpServer::new(move || {
 		App::new()
 			.wrap(
 				CookieSession::signed(&[0; 32])//Very unsecure but for example app this is sufficent
@@ -40,7 +41,7 @@ async fn main() -> std::io::Result<()> {
 			.service(projects::grant_access)
 			.service(projects::revoke_access)
 			.service(projects::begin_editor_session)
-			.data(EditorServer::default().start())
+			.data(server.clone())
 
 			.service(users::register)
 			.service(users::login)

@@ -16,6 +16,8 @@ const EDITOR_STATES = Object.freeze({
 
 export default class EditorController {
 	/**
+	 * View for editor
+	 *
 	 * @type {EditorView}
 	 */
 	view;
@@ -108,10 +110,7 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async createNewFile(name) {
-		const fullMessage = "1" + name;
-		console.log(`Sending '${fullMessage}'`);
-		this.webosocket.send(fullMessage);
-
+		this.webosocket.send(`1${name}`);
 	}
 
 	/**
@@ -123,7 +122,7 @@ export default class EditorController {
 	 * @param name {string} new name for file with this id
 	 */
 	async renameFile(id, name) {
-		//TODO
+		this.webosocket.send(`3${name}`);
 	}
 
 	/**
@@ -134,18 +133,7 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async deleteFile(id) {
-
-	}
-
-	/**
-	 * Sends message in current project context. All users curently
-	 * editing this project will see this message
-	 *
-	 * @param message {string}
-	 * @return {Promise<void>}
-	 */
-	async sendMessage(message) {
-		//TODO*
+		this.webosocket.send(`2${id}`);
 	}
 
 	connect = (projectId) => {
@@ -153,13 +141,11 @@ export default class EditorController {
 		const wsUri =
 			(window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
 			"localhost:5000" +
-			//window.location.host +
 			'/projects/' + projectId + "/edit"
 		console.log("Logging to project session " + projectId)
 		try {
 			this.webosocket = new WebSocket(wsUri)
 		}catch (e){
-			console.error("aaa")
 			this.view.showError(JSON.stringify(e));
 		}
 		console.log('Connecting...')
@@ -171,7 +157,6 @@ export default class EditorController {
 		}
 
 		this.webosocket.onmessage = function (e) {
-			console.log('Received: ' + e.data)
 			t.parseMessage(e.data);
 		}
 
@@ -185,7 +170,7 @@ export default class EditorController {
 		}
 	}
 	parseMessage = (message) => {
-		console.log(`Recived message: '${message}'`)
+		console.log(`Received message: '${message}'`)
 
 	}
 	disconnect = () => {

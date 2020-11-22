@@ -59,7 +59,7 @@ impl IProjectsFilesService for ProjectsFilesService {
 	}
 
 	fn get_all(&self) -> Vec<ProjectFile> {
-		self.get_all()
+		self.project_files_repository.get_all()
 	}
 
 	fn update(&self, file: ProjectFile) -> Result<ProjectFile, UpdateError> {
