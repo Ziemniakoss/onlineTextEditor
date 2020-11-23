@@ -174,11 +174,49 @@ export default class EditorController {
 			case "2":
 				this._handleSessionDisconnectedPackage(message.substring(1));
 				break;
+			case "3":
+				this._handleNewFilePackage(message.substring(1));
+				break;
 			case "9":
 				this._handleProjectData(JSON.parse(message.substring(1)));
 				break;
+			case "a":
+				this._handleErrorPackage(message.substring(1));
+				break;
 		}
+	}
 
+	/**
+	 *
+	 * @param {string} message contains error message
+	 * @private
+	 */
+	_handleErrorPackage(message) {
+		this.view.showError(message);
+	}
+
+	/**
+	 * New file was created on server
+	 *
+	 * @param {string} message string containing id and new file name separated by space
+	 * @private
+	 */
+	_handleNewFilePackage(message) {
+		const indexOfFirstSpace = message.indexOf(" ");
+		const id = message.substring(0, indexOfFirstSpace);
+		const name = message.substring(indexOfFirstSpace + 1);
+		console.log(`New file ${name} with id ${id} was created`);
+		this.files.push(new File(id, name))
+		this.files.sort(((a, b) => {
+			if (a.name > b.name) {
+				return 1
+			} else if (a.name < b.name) {
+				return -1
+			}
+			return 0;
+
+		}))
+		this.view.showFilesList(this.files);
 	}
 
 	/**
@@ -186,8 +224,8 @@ export default class EditorController {
 	 * @param {string} sessionId
 	 * @private
 	 */
-	_handleSessionDisconnectedPackage(sessionId){
-		this.sessions.forEach((val, key) =>{
+	_handleSessionDisconnectedPackage(sessionId) {
+		this.sessions.forEach((val, key) => {
 			console.log(`${key} ses ${val.name} ${key === val.id}`)
 		})
 		this.sessions.delete(sessionId);
@@ -199,7 +237,7 @@ export default class EditorController {
 	 * @param {string} message Message containing id and name of user separated by space
 	 * @private
 	 */
-	_handleNewSessionPackage(message){
+	_handleNewSessionPackage(message) {
 		const indexOfFirstSpace = message.indexOf(" ");
 		const sessionId = message.substring(0, indexOfFirstSpace);
 		const name = message.substring(indexOfFirstSpace + 1);
@@ -225,7 +263,7 @@ export default class EditorController {
 	 */
 	_handleProjectData(projectData) {
 		this.sessions = new Map();
-		projectData.sessions.forEach(session =>{
+		projectData.sessions.forEach(session => {
 			this.sessions.set(session.id, session);
 		})
 		this.view.showSessions(this.sessions.values());
@@ -233,9 +271,9 @@ export default class EditorController {
 		this.project = projectData.project;
 		this.view.showProjectInfo(this.project);
 
-		if(projectData.files != null){
+		if (projectData.files != null) {
 			this.files = projectData.files;
-		}else{
+		} else {
 			this.files = [];
 		}
 		this.view.showFilesList(this.files);

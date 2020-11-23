@@ -39,13 +39,13 @@ struct ProjectFileRepository {
 impl IProjectsFilesRepository for ProjectFileRepository {
 	fn create(&self, mut file: ProjectFile) -> Result<ProjectFile, ProjectFileCreationError> {
 		let result_code: i32 = get_client()
-			.query_one("SELECT * FROM create_file($1, $2)", &[&file.name, &self.project.id])
+			.query_one("SELECT * FROM create_file($1, $2)", &[&self.project.id, &file.name])
 			.unwrap()
 			.get(0);
 
 		return if result_code == -1 {
 			Err(ProjectFileCreationError::IllegalName)
-		} else if result_code == -2 {
+		} else if result_code == -3 {
 			Err(ProjectFileCreationError::DuplicateNames)
 		} else {
 			file.id = Some(result_code);

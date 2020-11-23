@@ -1,6 +1,6 @@
 use crate::models::{Project, User, ProjectFile};
 use crate::services::projects::GetError;
-use crate::repositories::projects_files::{IProjectsFilesRepository, ProjectFileUpdateError};
+use crate::repositories::projects_files::{IProjectsFilesRepository, ProjectFileUpdateError, ProjectFileCreationError};
 
 /// This service should be bound to one user and one project.
 pub trait IProjectsFilesService {
@@ -14,10 +14,13 @@ pub trait IProjectsFilesService {
 pub enum UpdateError {
 	DuplicateName,
 	IllegalName,
-	FileDoesNotExists
+	FileDoesNotExists,
 }
 
-pub enum CreationError {}
+pub enum CreationError {
+	IllegalName,
+	DuplicateNames,
+}
 
 pub enum DeletionError {}
 
@@ -74,7 +77,13 @@ impl IProjectsFilesService for ProjectsFilesService {
 	}
 
 	fn create(&self, file: ProjectFile) -> Result<ProjectFile, CreationError> {
-		todo!()
+		return match self.project_files_repository.create(file) {
+			Ok(file) => Ok(file),
+			Err(err) => match err {
+				ProjectFileCreationError::IllegalName => Err(CreationError::IllegalName),
+				ProjectFileCreationError::DuplicateNames => Err(CreationError::DuplicateNames)
+			}
+		};
 	}
 
 	fn delete(&self, file: ProjectFile) -> Result<ProjectFile, DeletionError> {

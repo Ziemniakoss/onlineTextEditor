@@ -8,9 +8,7 @@ use crate::models::{User, Project, ProjectFile};
 use log::{info, error, warn};
 use serde::Serialize;
 use crate::repositories::users::get_user;
-use crate::services::projects::GetError;
-use crate::services::projects_files::{IProjectsFilesService, ServiceCreationError};
-use std::env::set_var;
+use crate::services::projects_files::{IProjectsFilesService,  CreationError};
 
 
 #[derive(Message)]
@@ -60,6 +58,14 @@ struct SessionData {
 pub struct EditorServer {
 	sessions_2: HashMap<i32, SessionData>,
 	rng: ThreadRng,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+#[derive(Clone)]
+pub struct FileCreated {
+	pub id: i32,
+	pub name: String,
 }
 
 #[derive(Serialize)]
@@ -122,11 +128,12 @@ impl EditorServer {
 		}
 		let files = projects_files_service.get_all();
 		let mut sessions: Vec<SessionDataDto> = self.sessions_2.iter()
-			.map(|full_session_data| return SessionDataDto { id: full_session_data.0.to_owned(), name: full_session_data.1.user.name.clone() })
-			.collect();
-		sessions.push(SessionDataDto{
+			.map(|full_session_data| {
+				return SessionDataDto { id: full_session_data.0.to_owned(), name: full_session_data.1.user.name.clone() };
+			}).collect();
+		sessions.push(SessionDataDto {
 			id: session_data.id,
-			name: session_data.user.name.clone()
+			name: session_data.user.name.clone(),
 		});
 		addr.do_send(ProjectInfoDto {
 			project,
@@ -164,9 +171,7 @@ impl Handler<editor_session::Connect> for EditorServer {
 		if self.send_project_info(&msg.addr, &session_data) {
 			self.sessions_2.insert(id, session_data);
 			println!("New session with id {}, current sessions {}", id, self.sessions_2.len());
-		}else{
-
-		}
+		} else {}
 		id
 	}
 }
@@ -188,7 +193,50 @@ impl Handler<editor_session::Disconnect> for EditorServer {
 impl Handler<editor_session::FileCreationRequest> for EditorServer {
 	type Result = ();
 
-	fn handle(&mut self, msg: FileCreationRequest, ctx: &mut Context<Self>) -> Self::Result {}
+	fn handle(&mut self, msg: FileCreationRequest, ctx: &mut Context<Self>) -> Self::Result {
+		let session_data = self.sessions_2.get(&msg.session_id).expect("Non existing session id");
+		let projects_files_service;
+		match crate::services::projects_files::new(session_data.user.id, session_data.project_id) {
+			Ok(service) => projects_files_service = service,
+			Err(_) => {
+				self.send_error(&session_data.recipient, "You don't have access to this project".to_owned());
+				return;
+			}
+		}
+		let new_file = ProjectFile {
+			id: None,
+			name: msg.filename,
+			project_id: session_data.project_id,
+		};
+		let created_file;
+		match projects_files_service.create(new_file) {
+			Ok(file) => {
+				created_file = file;
+				info!("Created new file in project {} with name {} and id {}", created_file.project_id, created_file.name, created_file.id.unwrap());
+			}
+			Err(err) => {
+				match err {
+					CreationError::IllegalName => {
+						self.send_error(&session_data.recipient, "Illegal new file name".to_owned());
+					}
+					CreationError::DuplicateNames => {
+						self.send_error(&session_data.recipient, "File with that name already exists".to_owned())
+					}
+				}
+				return;
+			}
+		}
+		let message = FileCreated {
+			id: created_file.id.expect("That would mean that file was not created"),
+			name: created_file.name,
+		};
+
+		self.sessions_2.values().into_iter()
+			.filter(|s| { return s.project_id == session_data.project_id; })
+			.for_each(|session| {
+				session.recipient.do_send(message.clone())
+			});
+	}
 }
 
 impl Handler<ClientMessage> for EditorServer {

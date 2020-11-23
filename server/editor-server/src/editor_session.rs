@@ -4,7 +4,7 @@ use actix::*;
 use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
-use crate::server::{ProjectInfoDto, ErrorMessage};
+use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated};
 use serde_json::Error;
 use log::{error};
 
@@ -125,6 +125,14 @@ impl Handler<server::ProjectInfoDto> for EditorSession{
 				error!("Error while serializing ProjectInfoDto: {}", err);
 			}
 		}
+	}
+}
+
+impl Handler<server::FileCreated> for EditorSession{
+	type Result = ();
+
+	fn handle(&mut self, msg: FileCreated, ctx: &mut Self::Context) -> Self::Result {
+		ctx.text(format!("3{} {}", msg.id, msg.name));
 	}
 }
 

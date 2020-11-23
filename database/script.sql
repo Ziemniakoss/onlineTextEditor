@@ -145,14 +145,17 @@ CREATE OR REPLACE FUNCTION create_file(_project_id INT, _name CHAR) RETURNS INT
 	LANGUAGE plpgsql AS
 $body$
 BEGIN
-	IF _name IS NULL OR length(_name) = 0 THEN
-		RETURN -1;
-	END IF;
-	IF NOT EXISTS(SELECT id FROM projects WHERE id = _project_id) THEN
-		RETURN -2;
-	END IF;
-	INSERT INTO files (name, project_id) VALUES (_name, _project_id);
-	RETURN 0;
+    IF _name IS NULL OR length(_name) = 0 THEN
+        RETURN -1;
+    END IF;
+    IF NOT EXISTS(SELECT id FROM projects WHERE id = _project_id) THEN
+        RETURN -2;
+    END IF;
+    IF EXISTS(SELECT id FROM files WHERE project_id = _project_id AND name = _name) THEN
+        RETURN -3;
+    END IF;
+    INSERT INTO files (name, project_id) VALUES (_name, _project_id);
+    RETURN 0;
 END;
 $body$;
 
