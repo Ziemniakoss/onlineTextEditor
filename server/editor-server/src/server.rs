@@ -114,7 +114,7 @@ impl EditorServer {
 	/// does not exist. It will send error message to actor and return false
 	///
 	/// # Returns
-	///  - false if this actor does not have access to this project or project does not exists.
+	/// - false if this actor does not have access to this project or project does not exists.
 	/// - true otherwise
 	///
 	fn send_project_info(&self, addr: &Addr<EditorSession>, session_data: &SessionData) -> bool {
@@ -135,6 +135,7 @@ impl EditorServer {
 		}
 		let files = projects_files_service.get_all();
 		let mut sessions: Vec<SessionDataDto> = self.sessions_2.iter()
+			.filter(|session| {session.1.project_id == session_data.project_id})
 			.map(|full_session_data| {
 				return SessionDataDto { id: full_session_data.0.to_owned(), name: full_session_data.1.user.name.clone() };
 			}).collect();
