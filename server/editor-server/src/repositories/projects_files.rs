@@ -10,7 +10,7 @@ pub trait IProjectsFilesRepository {
 
 	fn update(&self, file: &ProjectFile) -> Result<(), ProjectFileUpdateError>;
 
-	fn delete(&self, file: ProjectFile);
+	fn delete(&self, file: ProjectFile) -> bool;
 
 	fn get(&self, file_id: i32) -> Option<ProjectFile>;
 
@@ -74,13 +74,16 @@ impl IProjectsFilesRepository for ProjectFileRepository {
 		};
 	}
 
-	fn delete(&self, file: ProjectFile) {
-		match file.id {
+	fn delete(&self, file: ProjectFile) ->bool {
+		return match file.id {
 			Some(file_id) => {
-				let _ = get_client().execute("DELETE FROM files WHERE id = $1", &[&file_id]);
+				let modified_rows = get_client().execute("DELETE FROM files WHERE id = $1 AND project_id = $2",
+											 &[&file_id, &self.project.id]).unwrap();
+				modified_rows > 0
 			}
 			None => {
 				warn!("SSomeone tried to delete file without id");
+				false
 			}
 		}
 	}

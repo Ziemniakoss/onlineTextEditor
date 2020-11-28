@@ -8,7 +8,7 @@ pub trait IProjectsFilesService {
 	fn get_all(&self) -> Vec<ProjectFile>;
 	fn update(&self, file: ProjectFile) -> Result<ProjectFile, UpdateError>;
 	fn create(&self, file: ProjectFile) -> Result<ProjectFile, CreationError>;
-	fn delete(&self, file: ProjectFile) -> Result<ProjectFile, DeletionError>;
+	fn delete(&self, file: ProjectFile) -> Result<(), DeletionError>;
 }
 
 pub enum UpdateError {
@@ -22,7 +22,9 @@ pub enum CreationError {
 	DuplicateNames,
 }
 
-pub enum DeletionError {}
+pub enum DeletionError {
+	FileDoesNotExistInProject
+}
 
 pub enum ServiceCreationError {
 	UserDoesNotExists,
@@ -86,7 +88,11 @@ impl IProjectsFilesService for ProjectsFilesService {
 		};
 	}
 
-	fn delete(&self, file: ProjectFile) -> Result<ProjectFile, DeletionError> {
-		todo!()
+	fn delete(&self, file: ProjectFile) -> Result<(), DeletionError> {
+		return  if(self.project_files_repository.delete(file)){
+			Ok(())
+		} else {
+			Err(DeletionError::FileDoesNotExistInProject)
+		}
 	}
 }

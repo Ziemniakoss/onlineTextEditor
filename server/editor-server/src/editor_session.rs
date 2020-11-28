@@ -4,9 +4,9 @@ use actix::*;
 use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
-use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated};
+use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated, FileDeleted};
 use serde_json::Error;
-use log::{error};
+use log::{error, info};
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
@@ -144,6 +144,14 @@ impl Handler<server::ErrorMessage> for EditorSession{
 	}
 }
 
+impl  Handler<server::FileDeleted> for EditorSession{
+	type Result = ();
+
+	fn handle(&mut self, msg: FileDeleted, ctx: &mut Self::Context) -> Self::Result {
+		ctx.text(format!("4{}", msg.id));
+	}
+}
+
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	fn handle(
@@ -208,7 +216,11 @@ impl EditorSession {
 						return;
 					}
 				}
-				println!("Delete file req, file id: ");
+				info!("Session {} editing project {} requested deletion of file {}", self.id, self.project_id, file_id);
+				self.addr.do_send(FileDeletionRequest{
+					session_id: self.id,
+					file_id
+				});
 			}
 			INCOMING_CODE_RENAME_FILE => {
 				println!("Rename file request");

@@ -26,11 +26,11 @@ export default class EditorView {
 			localStorage.setItem("theme", newTheme);
 		})
 		this.selectInitialTheme();
-		this.editor.session.setMode("ace/mode/text");
+		this.editor.session.setMode("ace/mode/sh");
 
-		this.editor.session.on("change", (e) => {
-			console.log("a")
-			t.insert({row: 0, column: 0}, ";;;");
+		this.editor.session.on("change", (c) => {
+			console.log(c)
+			// t.insert({row: 0, column: 0}, ";;;");
 		})
 
 		document.getElementById("new-file-button").addEventListener("click", (_) => {
@@ -70,7 +70,7 @@ export default class EditorView {
 	 */
 	showSessions(sessions) {
 		let sessionListElement = document.getElementById("users-list");
-		while(sessionListElement.firstChild) {
+		while (sessionListElement.firstChild) {
 			sessionListElement.removeChild(sessionListElement.firstChild);
 		}
 		for (const session of sessions) {
@@ -93,13 +93,34 @@ export default class EditorView {
 		}
 
 		files.forEach(file => {
-			/** @type {HTMLLIElement}*/
 			const fileListElement = document.createElement("li");
 			fileListElement.innerText = file.name;
+			fileListElement.title = file.name;
 			fileListElement.dataset["id"] = "" + file.id;
 			fileListElement.onclick = this.handleFileClick
+
+
+			/** @type {HTMLButtonElement} */
+			const renameButton = document.createElement("button");
+			renameButton.classList.add("option-button");
+			renameButton.textContent = "Rename*";
+			renameButton.dataset["id"] =`${file.id}`
+			fileListElement.appendChild(renameButton);
+
+			/** @type {HTMLButtonElement} */
+			const deleteButton = document.createElement("button");
+			deleteButton.classList.add("red-button");
+			deleteButton.textContent = "Delete";
+			fileListElement.appendChild(deleteButton);
+			deleteButton.dataset["id"] = file.id.toString()
+			deleteButton.onclick = this._handleDeleteButtonClick;
+
 			listElement.appendChild(fileListElement);
 		})
+	}
+
+	_handleDeleteButtonClick = (event) => {
+		this.controller.deleteFile(parseInt(event.target.dataset.id));
 	}
 
 	handleFileClick(event) {

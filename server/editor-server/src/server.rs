@@ -3,12 +3,12 @@ use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 use std::collections::{HashMap};
 use crate::editor_session;
-use crate::editor_session::{FileCreationRequest, EditorSession};
+use crate::editor_session::{FileCreationRequest, EditorSession, FileDeletionRequest};
 use crate::models::{User, Project, ProjectFile};
 use log::{info, error, warn};
 use serde::Serialize;
 use crate::repositories::users::get_user;
-use crate::services::projects_files::{IProjectsFilesService,  CreationError};
+use crate::services::projects_files::{IProjectsFilesService, CreationError, ServiceCreationError, DeletionError};
 
 
 #[derive(Message)]
@@ -66,6 +66,13 @@ pub struct EditorServer {
 pub struct FileCreated {
 	pub id: i32,
 	pub name: String,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+#[derive(Clone)]
+pub struct FileDeleted {
+	pub id: i32
 }
 
 #[derive(Serialize)]
@@ -152,6 +159,49 @@ impl EditorServer {
 
 impl Actor for EditorServer {
 	type Context = Context<Self>;
+}
+
+impl Handler<editor_session::FileDeletionRequest> for EditorServer {
+	type Result = ();
+
+	fn handle(&mut self, msg: FileDeletionRequest, ctx: &mut Context<Self>) -> Self::Result {
+		let session_data = self.sessions_2.get(&msg.session_id).unwrap();
+		let project_files_service;
+		match crate::services::projects_files::new(session_data.user.id, session_data.project_id) {
+			Ok(service) => project_files_service = service,
+			Err(_) => {
+				self.send_error(&session_data.recipient, "Project does not exist or you don't have access to it".to_owned());
+				return;
+			}
+		}
+		let file;
+		match project_files_service.get(msg.file_id) {
+			Some(f) => {
+				file = f;
+			}
+			None => {
+				warn!("Session {}(user {}) editing project {} tried to delete non existing file {}", session_data.id, session_data.user.id, session_data.project_id, msg.file_id);
+				self.send_error(&session_data.recipient, "File does not exist".to_owned());
+				return;
+			}
+		}
+		match project_files_service.delete(file) {
+			Ok(_) => {
+				info!("Session {}(user{}) deleted file {} from project {}", session_data.id, session_data.user.id, msg.file_id, session_data.project_id);
+				self.sessions_2.values().into_iter()
+					.filter(|session| { session.project_id == session_data.project_id })
+					.for_each(|session_data| {
+						session_data.recipient.do_send(FileDeleted{
+							id: msg.file_id
+						});
+					});
+			}
+			Err(_) => {
+				error!("Unknown error occured while deleting file");
+				self.send_error(&session_data.recipient, "Unknown error occured while deleting file".to_owned());
+			}
+		}
+	}
 }
 
 /// Register new session and assign unique id to this session

@@ -23,7 +23,7 @@ export default class EditorController {
 	view;
 
 	/**
-	 * Weboscket to server allowing to edit file and get
+	 * Websocket to server allowing to edit file and get
 	 * events about currently loaded project
 	 *
 	 * @type {WebSocket}
@@ -96,6 +96,7 @@ export default class EditorController {
 	 */
 	async init() {
 		const projectId = new URL(window.location).searchParams.get("project_id")
+		console.log("Project id " + projectId);
 		this.connect(projectId)
 	}
 
@@ -129,21 +130,17 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async deleteFile(id) {
+		console.log("Deleteing file " + id);
 		this.webosocket.send(`2${id}`);
 	}
 
 	connect = (projectId) => {
-		this.disconnect()
 		const wsUri =
 			(window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
 			"localhost:5000" +
 			'/projects/' + projectId + "/edit"
 		console.log("Logging to project session " + projectId)
-		try {
 			this.webosocket = new WebSocket(wsUri)
-		} catch (e) {
-			this.view.showError(JSON.stringify(e));
-		}
 		console.log('Connecting...')
 
 		const t = this;
@@ -151,18 +148,18 @@ export default class EditorController {
 			console.log('Connected.')
 			t.state = EDITOR_STATES.NO_FILE_OPENED
 		}
-
 		this.webosocket.onmessage = function (e) {
 			t.parseMessage(e.data);
 		}
 
-		this.webosocket.onclose = function () {
+		this.webosocket.onclose = function (e) {
 			console.log('Disconnected.')
+			console.log(e)
 			t.webosocket = null
 		}
 
 		this.webosocket.onerror = (e) => {
-			this.view.showError("Please make sure you are logged in and you have access to this project");
+			t.view.showError("Please make sure you are logged in and you have access to this project");
 		}
 	}
 	parseMessage = (message) => {
@@ -177,6 +174,9 @@ export default class EditorController {
 			case "3":
 				this._handleNewFilePackage(message.substring(1));
 				break;
+			case "4":
+					this._handleFileDeletedPckage(message.substring(1));
+				break;
 			case "9":
 				this._handleProjectData(JSON.parse(message.substring(1)));
 				break;
@@ -184,6 +184,13 @@ export default class EditorController {
 				this._handleErrorPackage(message.substring(1));
 				break;
 		}
+	}
+
+	_handleFileDeletedPckage(message){
+		const fileId = parseInt(message);
+		console.log(`File ${fileId} was deleted`);
+		this.files = this.files.filter(file => file.id !== fileId);
+		this.view.showFilesList(this.files);
 	}
 
 	/**
@@ -279,11 +286,11 @@ export default class EditorController {
 		this.view.showFilesList(this.files);
 	}
 
-	disconnect = () => {
-		if (this.webosocket) {
-			console.log('Disconnecting...')
-			this.webosocket.close()
-			this.webosocket = null
-		}
-	}
+	// disconnect = () => {
+	// 	if (this.webosocket) {
+	// 		console.log('Disconnecting...')
+	// 		this.webosocket.close()
+	// 		this.webosocket = null
+	// 	}
+	// }
 }
