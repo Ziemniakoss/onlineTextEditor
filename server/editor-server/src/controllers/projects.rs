@@ -13,7 +13,6 @@ use actix_web_actors::ws;
 use crate::editor_session::EditorSession;
 use crate::server;
 use std::time::Instant;
-use crate::models::Project;
 
 #[derive(Deserialize, Debug)]
 pub struct ProjectCreationDto {

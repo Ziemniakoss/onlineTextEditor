@@ -7,8 +7,7 @@ use crate::editor_session::{FileCreationRequest, EditorSession, FileDeletionRequ
 use crate::models::{User, Project, ProjectFile};
 use log::{info, error, warn};
 use serde::Serialize;
-use crate::repositories::users::get_user;
-use crate::services::projects_files::{IProjectsFilesService, CreationError, ServiceCreationError, DeletionError};
+use crate::services::projects_files::CreationError;
 
 
 #[derive(Message)]
@@ -165,7 +164,7 @@ impl Actor for EditorServer {
 impl Handler<editor_session::FileDeletionRequest> for EditorServer {
 	type Result = ();
 
-	fn handle(&mut self, msg: FileDeletionRequest, ctx: &mut Context<Self>) -> Self::Result {
+	fn handle(&mut self, msg: FileDeletionRequest, _: &mut Context<Self>) -> Self::Result {
 		let session_data = self.sessions_2.get(&msg.session_id).unwrap();
 		let project_files_service;
 		match crate::services::projects_files::new(session_data.user.id, session_data.project_id) {
@@ -244,7 +243,7 @@ impl Handler<editor_session::Disconnect> for EditorServer {
 impl Handler<editor_session::FileCreationRequest> for EditorServer {
 	type Result = ();
 
-	fn handle(&mut self, msg: FileCreationRequest, ctx: &mut Context<Self>) -> Self::Result {
+	fn handle(&mut self, msg: FileCreationRequest, _: &mut Context<Self>) -> Self::Result {
 		let session_data = self.sessions_2.get(&msg.session_id).expect("Non existing session id");
 		let projects_files_service;
 		match crate::services::projects_files::new(session_data.user.id, session_data.project_id) {

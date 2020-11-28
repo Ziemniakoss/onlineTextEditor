@@ -65,13 +65,16 @@ export default class EditorView {
 		alert(message);
 	}
 
+	/**
+	 * @typedef Session
+	 * @property {string} name name of user in this session
+	 * @property {number} id id of session
+	 */
 
 	/**
 	 * Show session list
 	 *
-	 * @param {IterableIterator} sessions
-	 * @param {string} sessions[].id id of session
-	 * @param {string} sessions[].name name of user in this session
+	 * @param {IterableIterator<Session>} sessions
 	 */
 	showSessions(sessions) {
 		let sessionListElement = document.getElementById("users-list");

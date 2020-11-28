@@ -5,8 +5,8 @@ use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
 use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated, FileDeleted};
-use serde_json::Error;
 use log::{error, info};
+use serde::Deserialize;
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
@@ -34,7 +34,7 @@ pub struct EditorSession {
 pub struct Connect {
 	pub addr: Addr<EditorSession>,
 	pub project_id: i32,
-	pub user: User
+	pub user: User,
 }
 
 #[derive(Message)]
@@ -85,7 +85,7 @@ impl Actor for EditorSession {
 			.send(Connect {
 				addr,
 				project_id: self.project_id,
-				user: self.user.clone()
+				user: self.user.clone(),
 			})
 			.into_actor(self)
 			.then(|res, act, ctx| {
@@ -115,11 +115,11 @@ impl Handler<server::Message> for EditorSession {
 	}
 }
 
-impl Handler<server::ProjectInfoDto> for EditorSession{
+impl Handler<server::ProjectInfoDto> for EditorSession {
 	type Result = ();
 
 	fn handle(&mut self, msg: ProjectInfoDto, ctx: &mut Self::Context) -> Self::Result {
-		match serde_json::to_string(&msg){
+		match serde_json::to_string(&msg) {
 			Ok(json) => ctx.text(format!("9{}", json)),
 			Err(err) => {
 				error!("Error while serializing ProjectInfoDto: {}", err);
@@ -128,7 +128,7 @@ impl Handler<server::ProjectInfoDto> for EditorSession{
 	}
 }
 
-impl Handler<server::FileCreated> for EditorSession{
+impl Handler<server::FileCreated> for EditorSession {
 	type Result = ();
 
 	fn handle(&mut self, msg: FileCreated, ctx: &mut Self::Context) -> Self::Result {
@@ -136,7 +136,7 @@ impl Handler<server::FileCreated> for EditorSession{
 	}
 }
 
-impl Handler<server::ErrorMessage> for EditorSession{
+impl Handler<server::ErrorMessage> for EditorSession {
 	type Result = ();
 
 	fn handle(&mut self, msg: ErrorMessage, ctx: &mut Self::Context) -> Self::Result {
@@ -144,12 +144,26 @@ impl Handler<server::ErrorMessage> for EditorSession{
 	}
 }
 
-impl  Handler<server::FileDeleted> for EditorSession{
+impl Handler<server::FileDeleted> for EditorSession {
 	type Result = ();
 
 	fn handle(&mut self, msg: FileDeleted, ctx: &mut Self::Context) -> Self::Result {
 		ctx.text(format!("4{}", msg.id));
 	}
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FileChange {
+	pub start: Position,
+	pub end: Position,
+	pub file_id: i32,
+	pub lines: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Position {
+	pub row: u32,
+	pub column: u32,
 }
 
 /// WebSocket message handler
@@ -217,15 +231,17 @@ impl EditorSession {
 					}
 				}
 				info!("Session {} editing project {} requested deletion of file {}", self.id, self.project_id, file_id);
-				self.addr.do_send(FileDeletionRequest{
+				self.addr.do_send(FileDeletionRequest {
 					session_id: self.id,
-					file_id
+					file_id,
 				});
 			}
 			INCOMING_CODE_RENAME_FILE => {
 				println!("Rename file request");
 			}
-			INCOMING_CODE_CHANGE_IN_FILE => {}
+			INCOMING_CODE_CHANGE_IN_FILE => {
+				info!("Incoming change in file")
+			}
 			_ => {
 				println!("Unknown first char: {} of message in session {}", incoming_code, self.id);
 			}

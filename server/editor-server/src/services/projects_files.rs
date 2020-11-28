@@ -89,7 +89,7 @@ impl IProjectsFilesService for ProjectsFilesService {
 	}
 
 	fn delete(&self, file: ProjectFile) -> Result<(), DeletionError> {
-		return  if(self.project_files_repository.delete(file)){
+		return  if self.project_files_repository.delete(file) {
 			Ok(())
 		} else {
 			Err(DeletionError::FileDoesNotExistInProject)
