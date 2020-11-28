@@ -13,9 +13,12 @@ export default class EditorView {
 
 	editor;
 
+	editedFileId = null;
+
 	constructor() {
 		this.controller = new EditorController(this);
 		this.editor = ace.edit("editor");
+		// document.getElementById("editor").id="editor-disabled"
 		this.init()
 	}
 
@@ -30,6 +33,8 @@ export default class EditorView {
 
 		this.editor.session.on("change", (c) => {
 			console.log(c)
+			console.log(JSON
+				.stringify(c))
 			// t.insert({row: 0, column: 0}, ";;;");
 		})
 
@@ -104,7 +109,7 @@ export default class EditorView {
 			const renameButton = document.createElement("button");
 			renameButton.classList.add("option-button");
 			renameButton.textContent = "Rename*";
-			renameButton.dataset["id"] =`${file.id}`
+			renameButton.dataset["id"] = `${file.id}`
 			fileListElement.appendChild(renameButton);
 
 			/** @type {HTMLButtonElement} */
@@ -112,15 +117,10 @@ export default class EditorView {
 			deleteButton.classList.add("red-button");
 			deleteButton.textContent = "Delete";
 			fileListElement.appendChild(deleteButton);
-			deleteButton.dataset["id"] = file.id.toString()
-			deleteButton.onclick = this._handleDeleteButtonClick;
+			deleteButton.onclick = (_) => this.editor.session.setValue("aaaaaaaaaaaaaaaa\nbaaaaaaaa")//this.controller.deleteFile(file.id);
 
 			listElement.appendChild(fileListElement);
 		})
-	}
-
-	_handleDeleteButtonClick = (event) => {
-		this.controller.deleteFile(parseInt(event.target.dataset.id));
 	}
 
 	handleFileClick(event) {
