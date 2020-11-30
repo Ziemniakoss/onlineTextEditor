@@ -4,10 +4,10 @@ use postgres::{Error, Row};
 /// Allows to manipulate single file content
 pub trait IFileContentRepository {
 	fn get_content(&self) -> Vec<String>;
+
 	fn get_line(&self, index: u32) -> Option<String>;
 
 	fn delete_line(&self, index: u32);
-	fn delete_lines(&self, indexes: Vec<u32>);
 
 	fn insert_new_line(&self, after_index: u32, content: Option<String>);
 
@@ -40,10 +40,6 @@ impl IFileContentRepository for FileContentRepository {
 	}
 
 	fn delete_line(&self, index: u32) {
-		todo!()
-	}
-
-	fn delete_lines(&self, indexes: Vec<u32>) {
 		todo!()
 	}
 
