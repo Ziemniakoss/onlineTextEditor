@@ -219,3 +219,46 @@ CREATE TRIGGER files_lines_after_delete_trigger
     ON files_lines
     FOR EACH ROW
 EXECUTE PROCEDURE files_lines_after_delete();
+
+CREATE OR REPLACE FUNCTION insert_line_in_file(_file_id INT, _line_number INT, _content CHAR) RETURNS INT
+    LANGUAGE plpgsql
+AS
+$body$
+DECLARE
+    _current_line_number INT;
+BEGIN
+    IF _line_number < 0 THEN
+        RETURN -1;
+    END IF;
+    IF NOT EXISTS(SELECT id FROM files WHERE id = _file_id) THEN
+        RETURN -2;
+    END IF;
+    --- add lines before this line if they dont exist
+    _current_line_number := _line_number - 1;
+    WHILE _current_line_number >= 0 AND NOT EXISTS(
+            SELECT *
+            FROM files_lines
+            WHERE file_id = _file_id
+              AND line_number = _current_line_number
+        )
+        LOOP
+            INSERT INTO files_lines (file_id, line_number, content) VALUES (_file_id, _current_line_number, '');
+            _current_line_number := _current_line_number - 1;
+        END LOOP;
+    --- move following lines by one
+    FOR _current_line_number IN
+        SELECT line_number
+        FROM files_lines
+        WHERE line_number >= _line_number
+          AND file_id = _file_id
+        ORDER BY line_number DESC
+        LOOP
+            UPDATE files_lines
+            SET line_number = _current_line_number + 1
+            WHERE file_id = _file_id
+              AND line_number = _current_line_number;
+        END LOOP;
+    INSERT INTO files_lines (file_id, line_number, content) VALUES (_file_id, _line_number, _content);
+    RETURN 0;
+END;
+$body$;
