@@ -207,6 +207,9 @@ export default class EditorController {
         console.log(`File ${fileId} was deleted`);
         this.files = this.files.filter(file => file.id !== fileId);
         this.view.showFilesList(this.files);
+        if(fileId === this.openedFile.id) {
+            this.view.hideEditor();
+        }
     }
 
     /**

@@ -173,6 +173,16 @@ export default class EditorView {
         this.editor.session.setMode(`ace/mode/${mode}`);
 
     }
+
+    /**
+     * Hides editor. Useful when for example edited file was deleted;
+     */
+    hideEditor(){
+        const editor = document.getElementById("editor");
+        if(editor != null) {
+            editor.id = "editor-disabled";
+        }
+    }
 }
 
 
