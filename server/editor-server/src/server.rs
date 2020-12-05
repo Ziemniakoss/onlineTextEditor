@@ -74,6 +74,13 @@ pub struct FileDeleted {
 	pub id: i32
 }
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct FileContent {
+	pub file_id: i32,
+	pub content: String
+}
+
 #[derive(Serialize)]
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -294,6 +301,28 @@ impl Handler<ClientMessage> for EditorServer {
 
 	fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
 		self.send_message(msg.project_id, msg.msg.as_str());
+	}
+}
+
+impl Handler<editor_session::FileContentRequest> for EditorServer{
+	type Result = ();
+
+	fn handle(&mut self, msg: editor_session::FileContentRequest, _: &mut Context<Self>) {
+		let file_content_repository =crate::repositories::file_content_repository::new(msg.file_id);
+		let file_content = file_content_repository.get_content();
+		let session_data;
+		match self.sessions_2.get(&msg.session_id){
+			Some(data) => session_data = data,
+			None => {
+				error!("Inactive session (or at least not registered in sessions registry) send \"get content\" package");
+				return;
+			}
+		}
+		info!("Sending file {} contents to session {}", msg.file_id, msg.session_id);
+		session_data.recipient.do_send(FileContent{
+			file_id: msg.file_id,
+			content: file_content.join("\n")
+		});
 	}
 }
 

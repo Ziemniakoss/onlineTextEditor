@@ -44,3 +44,14 @@ html, body, main {
 	padding-left: 0;
 	list-style-type: none;
 }
+
+.file-name-label{
+	max-width: 15em;
+	width: 15em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.file-list-element{
+	display: flex;
+}

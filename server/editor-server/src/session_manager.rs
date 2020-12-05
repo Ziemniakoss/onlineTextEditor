@@ -14,7 +14,7 @@ pub fn get_user_id(session: &Session) -> Option<i32> {
 pub fn set_user_id(session: &Session, user_id: i32) {
 	match session.set("user_id", user_id) {
 		Err(error) => {
-			error!("Error occured while trying to set user id in session: {}", error);
+			error!("Error occurred while trying to set user id in session: {}", error);
 		}
 		_ => {}
 	}

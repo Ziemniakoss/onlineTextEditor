@@ -5,13 +5,14 @@ use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
 use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated, FileDeleted};
-use log::{error, info};
+use log::{error, info, warn};
 use serde::Deserialize;
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
 const INCOMING_CODE_DELETE_FILE: &str = "2";
 const INCOMING_CODE_RENAME_FILE: &str = "3";
+const INCOMING_CODE_GET_FILE_CONTENT: &str = "4";
 const INCOMING_CODE_CHANGE_IN_FILE: &str = "5";
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -72,6 +73,14 @@ pub struct FileNameChangeRequest {
 	pub file_id: i32,
 	pub new_filename: String,
 }
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct FileContentRequest {
+	pub session_id: i32,
+	pub file_id: i32
+}
+
 
 impl Actor for EditorSession {
 	type Context = ws::WebsocketContext<Self>;
@@ -152,6 +161,14 @@ impl Handler<server::FileDeleted> for EditorSession {
 	}
 }
 
+impl Handler<server::FileContent> for EditorSession{
+	type Result =();
+
+	fn handle(&mut self, msg: server::FileContent, ctx: &mut Self::Context) -> Self::Result {
+		ctx.text(format!("5{} {}", msg.file_id, msg.content));
+	}
+}
+
 #[derive(Debug, Deserialize)]
 pub struct FileChange {
 	pub start: Position,
@@ -226,7 +243,7 @@ impl EditorSession {
 				match incoming_message.parse::<i32>() {
 					Ok(id) => file_id = id,
 					Err(_) => {
-						println!("Inparsable file id");
+						println!("Unparsable file id");
 						return;
 					}
 				}
@@ -241,6 +258,21 @@ impl EditorSession {
 			}
 			INCOMING_CODE_CHANGE_IN_FILE => {
 				info!("Incoming change in file")
+			}
+			INCOMING_CODE_GET_FILE_CONTENT =>{
+				info!("Incoming file content request");
+				let file_id;
+				match incoming_message.parse::<i32>(){
+					Ok(id) => file_id = id,
+					Err(_) => {
+						warn!("Session {} sent file content request with unparsable file id {}", self.id, incoming_message);
+						return;
+					}
+				}
+				self.addr.do_send(FileContentRequest{
+					session_id: self.id,
+					file_id
+				})
 			}
 			_ => {
 				println!("Unknown first char: {} of message in session {}", incoming_code, self.id);
@@ -257,17 +289,13 @@ impl EditorSession {
 			if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
 				// heartbeat timed out
 				println!("Websocket Client heartbeat failed, disconnecting!");
-
 				// notify chat server
 				act.addr.do_send(Disconnect { session_id: act.id });
-
 				// stop actor
 				ctx.stop();
-
 				// don't try to send a ping
 				return;
 			}
-
 			ctx.ping(b"");
 		});
 	}
