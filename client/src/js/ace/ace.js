@@ -3093,9 +3093,10 @@
 			}, e) : this.insert({row: 0, column: 0}, e)
 		};
 	(function () {
-		r.implement(this, s), this.setValue = function (e) {
+		r.implement(this, s), this.setValue = function (e, cancelSignal) {
+			console.log("set Value with cancel signal : " + cancelSignal)
 			var t = this.getLength() - 1;
-			this.remove(new o(0, 0, t, this.getLine(t).length)), this.insert({row: 0, column: 0}, e, true)
+			this.remove(new o(0, 0, t, this.getLine(t).length), cancelSignal), this.insert({row: 0, column: 0}, e, cancelSignal)
 		}, this.getValue = function () {
 			return this.getAllLines().join(this.getNewLineCharacter())
 		}, this.createAnchor = function (e, t) {
@@ -3148,6 +3149,7 @@
 		}, this.insertNewLine = function (e) {
 			return console.warn("Use of document.insertNewLine is deprecated. Use insertMergedLines(position, ['', '']) instead."), this.insertMergedLines(e, ["", ""])
 		}, this.insert = function (e, t, cancelSignal) {
+			console.log("Insert with canacel syginal: " +cancelSignal)
 			return this.getLength() <= 1 && this.$detectNewLine(t), this.insertMergedLines(e, this.$split(t), cancelSignal)
 		}, this.insertInLine = function (e, t) {
 			var n = this.clippedPos(e.row, e.column), r = this.pos(e.row, e.column + t.length);
@@ -3175,14 +3177,15 @@
 			var n = this.clippedPos(e.row, e.column),
 				r = {row: n.row + t.length - 1, column: (t.length == 1 ? n.column : 0) + t[t.length - 1].length};
 			return this.applyDelta({start: n, end: r, action: "insert", lines: t}, null, cancelSignal), this.clonePos(r)
-		}, this.remove = function (e) {
+		}, this.remove = function (e, cancelSignal) {
+			console.log("remove with cancel signal: " + cancelSignal)
 			var t = this.clippedPos(e.start.row, e.start.column), n = this.clippedPos(e.end.row, e.end.column);
 			return this.applyDelta({
 				start: t,
 				end: n,
 				action: "remove",
 				lines: this.getLinesForRange({start: t, end: n})
-			}), this.clonePos(t)
+			}, null,  cancelSignal), this.clonePos(t)
 		}, this.removeInLine = function (e, t, n) {
 			var r = this.clippedPos(e, t), i = this.clippedPos(e, n);
 			return this.applyDelta({
@@ -3205,6 +3208,7 @@
 				lines: ["", ""]
 			})
 		}, this.replace = function (e, t) {
+			console.log("Replace 1")
 			e instanceof o || (e = o.fromPoints(e.start, e.end));
 			if (t.length === 0 && e.isEmpty()) return e.start;
 			if (t == this.getTextRange(e)) return e.end;
@@ -3215,8 +3219,8 @@
 			for (var t = 0; t < e.length; t++) this.applyDelta(e[t])
 		}, this.revertDeltas = function (e) {
 			for (var t = e.length - 1; t >= 0; t--) this.revertDelta(e[t])
-		}, this.applyDelta = function (e, t, cancelSignal) {
-			console.log("Apply delta, cancel signal :" + cancelSignal )
+		}, this.applyDelta = function (e, t, cancelSignal, x) {
+			console.log("Apply delta, cancel signal :" + cancelSignal +" coś innego " + x )
 			var n = e.action == "insert";
 			if (n ? e.lines.length <= 1 && !e.lines[0] : !o.comparePoints(e.start, e.end)) return;
 			n && e.lines.length > 2e4 ? this.$splitAndapplyLargeDelta(e, 2e4) : (i(this.$lines, e, t), this._signal("change", e, cancelSignal))
@@ -4093,9 +4097,9 @@
 				action: "removeFolds",
 				folds: t
 			}, this.mergeUndoDeltas), this.mergeUndoDeltas = !0), this.$undoManager.add(e, this.mergeUndoDeltas), this.mergeUndoDeltas = !0, this.$informUndoManager.schedule()), this.bgTokenizer && this.bgTokenizer.$updateOnChange(e), this._signal("change", e)
-		}, this.setValue = function (e) {
+		}, this.setValue = function (e, cancelSignal) {
 			console.log("aaaaaaaaa")
-			this.doc.setValue(e), this.selection.moveTo(0, 0), this.$resetRowCache(0), this.setUndoManager(this.$undoManager), this.getUndoManager().reset()
+			this.doc.setValue(e, cancelSignal), this.selection.moveTo(0, 0), this.$resetRowCache(0), this.setUndoManager(this.$undoManager), this.getUndoManager().reset()
 			console.log("bb")
 		}, this.getValue = this.toString = function () {
 			return this.doc.getValue()
@@ -4331,10 +4335,10 @@
 			return this.doc.getLength()
 		}, this.getTextRange = function (e) {
 			return this.doc.getTextRange(e || this.selection.getRange())
-		}, this.insert = function (e, t) {
-			return this.doc.insert(e, t)
-		}, this.remove = function (e) {
-			return this.doc.remove(e)
+		}, this.insert = function (e, t, cancelSignal) {
+			return this.doc.insert(e, t, cancelSignal)
+		}, this.remove = function (e, cancelSignal) {
+			return this.doc.remove(e, cancelSignal)
 		}, this.removeFullLines = function (e, t) {
 			return this.doc.removeFullLines(e, t)
 		}, this.undoChanges = function (e, t) {
@@ -5868,8 +5872,9 @@
 			}), this.curOp = null, t && t._signal("changeEditor", {oldEditor: this}), e && e._signal("changeEditor", {editor: this}), e && e.bgTokenizer && e.bgTokenizer.scheduleStart()
 		}, this.getSession = function () {
 			return this.session
-		}, this.setValue = function (e, t) {
-			return this.session.doc.setValue(e), t ? t == 1 ? this.navigateFileEnd() : t == -1 && this.navigateFileStart() : this.selectAll(), e
+		}, this.setValue = function (e, t, cancelSignal) {
+			console.log("Set value in line 8575")
+			return this.session.doc.setValue(e,cancelSignal), t ? t == 1 ? this.navigateFileEnd() : t == -1 && this.navigateFileStart() : this.selectAll(), e
 		}, this.getValue = function () {
 			return this.session.getValue()
 		}, this.getSelection = function () {
@@ -6068,7 +6073,7 @@
 			}
 		}, this.execCommand = function (e, t) {
 			return this.commands.exec(e, this, t)
-		}, this.insert = function (e, t) {
+		}, this.insert = function (e, t, cancelSignal) {
 			var n = this.session, r = n.getMode(), i = this.getCursorPosition();
 			if (this.getBehavioursEnabled() && !t) {
 				var s = r.transformAction(n.getState(i.row), "insertion", this, n, e);
@@ -6077,7 +6082,7 @@
 			e == "	" && (e = this.session.getTabString());
 			if (!this.selection.isEmpty()) {
 				var o = this.getSelectionRange();
-				i = this.session.remove(o), this.clearSelection()
+				i = this.session.remove(o, cancelSignal), this.clearSelection()
 			} else if (this.session.getOverwrite() && e.indexOf("\n") == -1) {
 				var o = new p.fromPoints(i, i);
 				o.end.column += e.length, this.session.remove(o)
@@ -6091,7 +6096,7 @@
 			}
 			this.clearSelection();
 			var f = i.column, l = n.getState(i.row), u = n.getLine(i.row), c = r.checkOutdent(l, u, e);
-			n.insert(i, e), s && s.selection && (s.selection.length == 2 ? this.selection.setSelectionRange(new p(i.row, f + s.selection[0], i.row, f + s.selection[1])) : this.selection.setSelectionRange(new p(i.row + s.selection[0], s.selection[1], i.row + s.selection[2], s.selection[3])));
+			n.insert(i, e,cancelSignal), s && s.selection && (s.selection.length == 2 ? this.selection.setSelectionRange(new p(i.row, f + s.selection[0], i.row, f + s.selection[1])) : this.selection.setSelectionRange(new p(i.row + s.selection[0], s.selection[1], i.row + s.selection[2], s.selection[3])));
 			if (this.$enableAutoIndent) {
 				if (n.getDocument().isNewLine(e)) {
 					var h = r.getNextLineIndent(l, u.slice(0, i.column), n.getTabString());
@@ -6197,7 +6202,7 @@
 			this.setOption("fadeFoldWidgets", e)
 		}, this.getFadeFoldWidgets = function () {
 			return this.getOption("fadeFoldWidgets")
-		}, this.remove = function (e) {
+		}, this.remove = function (e, cancelSignal) {
 			this.selection.isEmpty() && (e == "left" ? this.selection.selectLeft() : this.selection.selectRight());
 			var t = this.getSelectionRange();
 			if (this.getBehavioursEnabled()) {
@@ -6212,7 +6217,7 @@
 				}
 				i && (t = i)
 			}
-			this.session.remove(t), this.clearSelection()
+			this.session.remove(t, cancelSignal), this.clearSelection()
 		}, this.removeWordRight = function () {
 			this.selection.isEmpty() && this.selection.selectWordRight(), this.session.remove(this.getSelectionRange()), this.clearSelection()
 		}, this.removeWordLeft = function () {

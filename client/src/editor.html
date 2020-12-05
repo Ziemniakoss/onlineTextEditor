@@ -1,79 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Title</title>
-	<link rel="stylesheet" href="styles/style.css">
-	<link rel="stylesheet" href="styles/editor.css">
-	<script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
-	<script src="js/editor.js" type="module"></script>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/editor.css">
+    <script src="js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/editor.js" type="module"></script>
 </head>
 <body>
 <main>
-	<div class="content-wrapper">
-		<div id="option-panel">
-			<label for="theme-selector"><span>Theme</span></label><select id="theme-selector">
-				<option value="ambiance">Ambiance</option>
-				<option value="chaos">Chaos</option>
-				<option value="chrome">Chrome</option>
-				<option value="clouds">Clouds</option>
-				<option value="clouds_midnight">Clouds Midnight</option>
-				<option value="cobalt">Cobalt</option>
-				<option value="crimson_editor">Crimson Editor</option>
-				<option value="dawn">Dawn</option>
-				<option value="dracula">Dracula</option>
-				<option value="dreamweaver">Dreamweaver</option>
-				<option value="eclipse">Eclipse</option>
-				<option value="github">Github</option>
-				<option value="gob">Gob</option>
-				<option value="gruvbox">Gruvbox</option>
-				<option value="idle_fingers">Idle Fingers</option>
-				<option value="iplastic">IPlastic</option>
-				<option value="katzenmilch">Katzenmilch</option>
-				<option value="kr_theme">Kr Theme</option>
-				<option value="kuroir">Kuroir</option>
-				<option value="merbivore">Merbivore</option>
-				<option value="merbivore_soft">Merbivore Soft</option>
-				<option value="mono_industrial">Mono Industrial</option>
-				<option value="monokai">Monokai</option>
-				<option value="nord_dark">Nord_dark</option>
-				<option value="pastel_on_dark">Pastel on Dark</option>
-				<option value="solarized_dark">Solarized Dark</option>
-				<option value="solarized_light">Solarized Light</option>
-				<option value="sqlserver">SQL Server</option>
-				<option value="terminal">Terminal</option>
-				<option value="textmate">Textmate</option>
-				<option value="tomorrow">Tomorrow</option>
-				<option value="tomorrow_night_blue">Tomorrow Night Blue</option>
-				<option value="tomorrow_night_bright">tomorrow Night Bright</option>
-				<option value="tomorrow_night_eighties">tomorrow Night Eighties</option>
-				<option value="tomorrow_night">Tomorrow Night</option>
-				<option value="twilight">Twilight</option>
-				<option value="vibrant_ink">Vibrant Ink</option>
-				<option value="xcode">XCode</option>
-			</select>
-		</div>
-		<div class="editor-wrapper">
-			<div id="project-structure">
-				<h3 id="project-name">Project name</h3>
-				<p id="project-description">Description</p>
-				<hr>
-				<h3>Files</h3>
-				<div id="new-file-form">
-					<input id="new-file-name" placeholder="new file name">
-					<button id="new-file-button">Create</button>
-				</div>
-				<ul id="project-files-list">
-				</ul>
-			</div>
-			<div id="editor"></div>
-			<div id="editing-users">
-				<div>Users currently editing</div>
-				<ul id="users-list">
-				</ul>
-			</div>
-		</div>
-	</div>
+    <div class="content-wrapper">
+        <div id="option-panel">
+            <label for="theme-selector"><span>Theme</span></label><select id="theme-selector">
+            <option value="ambiance">Ambiance</option>
+            <option value="chaos">Chaos</option>
+            <option value="chrome">Chrome</option>
+            <option value="clouds">Clouds</option>
+            <option value="clouds_midnight">Clouds Midnight</option>
+            <option value="cobalt">Cobalt</option>
+            <option value="crimson_editor">Crimson Editor</option>
+            <option value="dawn">Dawn</option>
+            <option value="dracula">Dracula</option>
+            <option value="dreamweaver">Dreamweaver</option>
+            <option value="eclipse">Eclipse</option>
+            <option value="github">Github</option>
+            <option value="gob">Gob</option>
+            <option value="gruvbox">Gruvbox</option>
+            <option value="idle_fingers">Idle Fingers</option>
+            <option value="iplastic">IPlastic</option>
+            <option value="katzenmilch">Katzenmilch</option>
+            <option value="kr_theme">Kr Theme</option>
+            <option value="kuroir">Kuroir</option>
+            <option value="merbivore">Merbivore</option>
+            <option value="merbivore_soft">Merbivore Soft</option>
+            <option value="mono_industrial">Mono Industrial</option>
+            <option value="monokai">Monokai</option>
+            <option value="nord_dark">Nord_dark</option>
+            <option value="pastel_on_dark">Pastel on Dark</option>
+            <option value="solarized_dark">Solarized Dark</option>
+            <option value="solarized_light">Solarized Light</option>
+            <option value="sqlserver">SQL Server</option>
+            <option value="terminal">Terminal</option>
+            <option value="textmate">Textmate</option>
+            <option value="tomorrow">Tomorrow</option>
+            <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+            <option value="tomorrow_night_bright">tomorrow Night Bright</option>
+            <option value="tomorrow_night_eighties">tomorrow Night Eighties</option>
+            <option value="tomorrow_night">Tomorrow Night</option>
+            <option value="twilight">Twilight</option>
+            <option value="vibrant_ink">Vibrant Ink</option>
+            <option value="xcode">XCode</option>
+        </select>
+        </div>
+        <div class="editor-wrapper">
+            <div id="project-structure">
+                <h3 id="project-name">Project name</h3>
+                <p id="project-description">Description</p>
+                <hr>
+                <h3>Files</h3>
+                <div id="new-file-form">
+                    <input id="new-file-name" placeholder="new file name">
+                    <button id="new-file-button">Create</button>
+                </div>
+                <ul id="project-files-list">
+                </ul>
+            </div>
+            <div id="editor"></div>
+            <div id="editing-users">
+                <div>Users currently editing</div>
+                <ul id="users-list">
+                </ul>
+            </div>
+        </div>
+    </div>
 </main>
 </body>
 </html>

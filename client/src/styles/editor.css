@@ -6,8 +6,8 @@
 }
 
 #editor {
-	height: 100%;
-	/*width: 80%;*/
+	height: 90%;
+	width: 80%;
 	flex: 1 1 auto;
 }
 
@@ -46,8 +46,8 @@ html, body, main {
 }
 
 .file-name-label{
-	max-width: 15em;
-	width: 15em;
+	max-width: 10em;
+	width: 10em;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
