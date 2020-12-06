@@ -1522,7 +1522,6 @@
 		if (r && !t.defaultPrevented) return r(t, this)
 	}, r._signal = function (e, t, cancelSignal) {
 		if(cancelSignal) {
-			console.log("Canceling signal")
 			return;
 		}
 		var n = (this._eventRegistry || {})[e];
@@ -3024,7 +3023,6 @@
 	}
 
 	t.applyDelta = function (e, t, n, cancelSignal) {
-		console.log("apply delta " + n + " " + cancelSignal);
 		var r = t.start.row, i = t.start.column, s = e[r] || "";
 		switch (t.action) {
 			case"insert":
@@ -3094,7 +3092,6 @@
 		};
 	(function () {
 		r.implement(this, s), this.setValue = function (e, cancelSignal) {
-			console.log("set Value with cancel signal : " + cancelSignal)
 			var t = this.getLength() - 1;
 			this.remove(new o(0, 0, t, this.getLine(t).length), cancelSignal), this.insert({row: 0, column: 0}, e, cancelSignal)
 		}, this.getValue = function () {
@@ -3149,7 +3146,6 @@
 		}, this.insertNewLine = function (e) {
 			return console.warn("Use of document.insertNewLine is deprecated. Use insertMergedLines(position, ['', '']) instead."), this.insertMergedLines(e, ["", ""])
 		}, this.insert = function (e, t, cancelSignal) {
-			console.log("Insert with canacel syginal: " +cancelSignal)
 			return this.getLength() <= 1 && this.$detectNewLine(t), this.insertMergedLines(e, this.$split(t), cancelSignal)
 		}, this.insertInLine = function (e, t) {
 			var n = this.clippedPos(e.row, e.column), r = this.pos(e.row, e.column + t.length);
@@ -3178,7 +3174,6 @@
 				r = {row: n.row + t.length - 1, column: (t.length == 1 ? n.column : 0) + t[t.length - 1].length};
 			return this.applyDelta({start: n, end: r, action: "insert", lines: t}, null, cancelSignal), this.clonePos(r)
 		}, this.remove = function (e, cancelSignal) {
-			console.log("remove with cancel signal: " + cancelSignal)
 			var t = this.clippedPos(e.start.row, e.start.column), n = this.clippedPos(e.end.row, e.end.column);
 			return this.applyDelta({
 				start: t,
@@ -3208,7 +3203,6 @@
 				lines: ["", ""]
 			})
 		}, this.replace = function (e, t) {
-			console.log("Replace 1")
 			e instanceof o || (e = o.fromPoints(e.start, e.end));
 			if (t.length === 0 && e.isEmpty()) return e.start;
 			if (t == this.getTextRange(e)) return e.end;
@@ -3220,7 +3214,6 @@
 		}, this.revertDeltas = function (e) {
 			for (var t = e.length - 1; t >= 0; t--) this.revertDelta(e[t])
 		}, this.applyDelta = function (e, t, cancelSignal, x) {
-			console.log("Apply delta, cancel signal :" + cancelSignal +" coś innego " + x )
 			var n = e.action == "insert";
 			if (n ? e.lines.length <= 1 && !e.lines[0] : !o.comparePoints(e.start, e.end)) return;
 			n && e.lines.length > 2e4 ? this.$splitAndapplyLargeDelta(e, 2e4) : (i(this.$lines, e, t), this._signal("change", e, cancelSignal))
@@ -4098,9 +4091,7 @@
 				folds: t
 			}, this.mergeUndoDeltas), this.mergeUndoDeltas = !0), this.$undoManager.add(e, this.mergeUndoDeltas), this.mergeUndoDeltas = !0, this.$informUndoManager.schedule()), this.bgTokenizer && this.bgTokenizer.$updateOnChange(e), this._signal("change", e)
 		}, this.setValue = function (e, cancelSignal) {
-			console.log("aaaaaaaaa")
 			this.doc.setValue(e, cancelSignal), this.selection.moveTo(0, 0), this.$resetRowCache(0), this.setUndoManager(this.$undoManager), this.getUndoManager().reset()
-			console.log("bb")
 		}, this.getValue = this.toString = function () {
 			return this.doc.getValue()
 		}, this.getSelection = function () {
@@ -5873,7 +5864,6 @@
 		}, this.getSession = function () {
 			return this.session
 		}, this.setValue = function (e, t, cancelSignal) {
-			console.log("Set value in line 8575")
 			return this.session.doc.setValue(e,cancelSignal), t ? t == 1 ? this.navigateFileEnd() : t == -1 && this.navigateFileStart() : this.selectAll(), e
 		}, this.getValue = function () {
 			return this.session.getValue()

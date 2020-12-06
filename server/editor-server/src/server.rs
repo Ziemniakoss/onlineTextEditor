@@ -96,6 +96,19 @@ pub struct SessionDataDto {
 	name: String,
 }
 
+#[derive(Message)]
+#[rtype(result = "()")]
+#[derive(Clone)]
+pub struct ChangeInFile {
+	pub file_id: i32,
+	pub start_row: u32,
+	pub start_column: u32,
+	pub end_row: u32,
+	pub end_column: u32,
+	pub change_id: i32,
+	pub change: String
+}
+
 impl Default for EditorServer {
 	fn default() -> EditorServer {
 		println!("Creat");
@@ -323,6 +336,14 @@ impl Handler<editor_session::FileContentRequest> for EditorServer{
 			file_id: msg.file_id,
 			content: file_content.join("\n")
 		});
+	}
+}
+
+impl Handler<editor_session::FileChange> for EditorServer{
+	type Result = ();
+
+	fn handle(&mut self, msg: editor_session::FileChange, _: &mut Context<Self>) {
+		println!("Server recived file change {:#?}", msg);
 	}
 }
 

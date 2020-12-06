@@ -14,10 +14,6 @@ export default class EditorView {
 	editor;
 
 	editedFileId = null;
-	/**
-	 * Real file content stored in database
-	 */
-	fileContent;
 
 	constructor() {
 		this.controller = new EditorController(this);
@@ -37,11 +33,6 @@ export default class EditorView {
 
 		this.editor.session.on("change", (c) => {
 			this.controller.handleChange(c);
-			// const cursorPreChange = this.editor.selection.getCursor();
-			// this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
-			// console.log(JSON
-			// 	.stringify(c))
-			// t.insert({row: 0, column: 0}, ";;;");
 		})
 
 		document.getElementById("new-file-button").addEventListener("click", (_) => {
@@ -88,7 +79,6 @@ export default class EditorView {
 			sessionListElement.removeChild(sessionListElement.firstChild);
 		}
 		for (const session of sessions) {
-			console.log(JSON.stringify(session))
 			const sessionDomElement = document.createElement("li");
 			sessionDomElement.textContent = session.name;
 			sessionListElement.appendChild(sessionDomElement);
@@ -168,14 +158,7 @@ export default class EditorView {
 	 */
 	showFileContent(content) {
 		const cursorPreChange = this.editor.selection.getCursor();
-		console.log("Setting value")
 		this.editor.session.setValue(content, true);
-		console.log("Value set")
-		console.log("What i set")
-		console.table(content.split("\n"));
-		console.log("What i got")
-		console.table(this.editor.getValue().split("\n"));
-		console.log("\n\n--------------------------------------\n\n")
 		this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
 	}
 
