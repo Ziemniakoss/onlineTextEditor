@@ -78,7 +78,7 @@ pub struct FileDeleted {
 #[rtype(result = "()")]
 pub struct FileContent {
 	pub file_id: i32,
-	pub content: String
+	pub content: String,
 }
 
 #[derive(Serialize)]
@@ -106,7 +106,7 @@ pub struct ChangeInFile {
 	pub end_row: u32,
 	pub end_column: u32,
 	pub change_id: i32,
-	pub change: String
+	pub change: String,
 }
 
 impl Default for EditorServer {
@@ -154,7 +154,7 @@ impl EditorServer {
 		}
 		let files = projects_files_service.get_all();
 		let mut sessions: Vec<SessionDataDto> = self.sessions_2.iter()
-			.filter(|session| {session.1.project_id == session_data.project_id})
+			.filter(|session| { session.1.project_id == session_data.project_id })
 			.map(|full_session_data| {
 				return SessionDataDto { id: full_session_data.0.to_owned(), name: full_session_data.1.user.name.clone() };
 			}).collect();
@@ -211,7 +211,7 @@ impl Handler<editor_session::FileDeletionRequest> for EditorServer {
 				self.sessions_2.values().into_iter()
 					.filter(|session| { session.project_id == session_data.project_id })
 					.for_each(|session_data| {
-						session_data.recipient.do_send(FileDeleted{
+						session_data.recipient.do_send(FileDeleted {
 							id: msg.file_id
 						});
 					});
@@ -317,14 +317,14 @@ impl Handler<ClientMessage> for EditorServer {
 	}
 }
 
-impl Handler<editor_session::FileContentRequest> for EditorServer{
+impl Handler<editor_session::FileContentRequest> for EditorServer {
 	type Result = ();
 
 	fn handle(&mut self, msg: editor_session::FileContentRequest, _: &mut Context<Self>) {
-		let file_content_repository =crate::repositories::file_content_repository::new(msg.file_id);
+		let file_content_repository = crate::repositories::file_content_repository::new(msg.file_id);
 		let file_content = file_content_repository.get_content();
 		let session_data;
-		match self.sessions_2.get(&msg.session_id){
+		match self.sessions_2.get(&msg.session_id) {
 			Some(data) => session_data = data,
 			None => {
 				error!("Inactive session (or at least not registered in sessions registry) send \"get content\" package");
@@ -332,14 +332,14 @@ impl Handler<editor_session::FileContentRequest> for EditorServer{
 			}
 		}
 		info!("Sending file {} contents to session {}", msg.file_id, msg.session_id);
-		session_data.recipient.do_send(FileContent{
+		session_data.recipient.do_send(FileContent {
 			file_id: msg.file_id,
-			content: file_content.join("\n")
+			content: file_content.join("\n"),
 		});
 	}
 }
 
-impl Handler<editor_session::FileChange> for EditorServer{
+impl Handler<editor_session::FileChange> for EditorServer {
 	type Result = ();
 
 	fn handle(&mut self, msg: editor_session::FileChange, _: &mut Context<Self>) {
