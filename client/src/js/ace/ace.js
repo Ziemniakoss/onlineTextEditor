@@ -3093,6 +3093,7 @@
 	(function () {
 		r.implement(this, s), this.setValue = function (e, cancelSignal) {
 			var t = this.getLength() - 1;
+			console.log("Set value 1")
 			this.remove(new o(0, 0, t, this.getLine(t).length), cancelSignal), this.insert({row: 0, column: 0}, e, cancelSignal)
 		}, this.getValue = function () {
 			return this.getAllLines().join(this.getNewLineCharacter())
@@ -4091,6 +4092,8 @@
 				folds: t
 			}, this.mergeUndoDeltas), this.mergeUndoDeltas = !0), this.$undoManager.add(e, this.mergeUndoDeltas), this.mergeUndoDeltas = !0, this.$informUndoManager.schedule()), this.bgTokenizer && this.bgTokenizer.$updateOnChange(e), this._signal("change", e)
 		}, this.setValue = function (e, cancelSignal) {
+			console.log("Set value 2")
+
 			this.doc.setValue(e, cancelSignal), this.selection.moveTo(0, 0), this.$resetRowCache(0), this.setUndoManager(this.$undoManager), this.getUndoManager().reset()
 		}, this.getValue = this.toString = function () {
 			return this.doc.getValue()
@@ -5864,6 +5867,8 @@
 		}, this.getSession = function () {
 			return this.session
 		}, this.setValue = function (e, t, cancelSignal) {
+			console.log("Set value 3: cancel signal : "+ cancelSignal)
+
 			return this.session.doc.setValue(e,cancelSignal), t ? t == 1 ? this.navigateFileEnd() : t == -1 && this.navigateFileStart() : this.selectAll(), e
 		}, this.getValue = function () {
 			return this.session.getValue()

@@ -190,13 +190,13 @@ export default class EditorController {
 			t.webosocket = null;
 			clearInterval(t.intervalId);
 		}
-		this.intervalId = setInterval(() => this.sendChangesToServer(t.changesCache.removeAll()), 100)
+		this.intervalId = setInterval(() => this.sendChangesToServer(t.changesCache.removeAll()), SENDING_TIME_INTERVAL_MS)
 	}
 
 	sendChangesToServer(changes) {
 		changes.forEach(change => {
 			const message = this._convertChangeToMessage(change);
-			console.log("SEnding change: " + message);
+			console.log("Sending change: " + message);
 			this.webosocket.send(message);
 		})
 	}
@@ -234,6 +234,9 @@ export default class EditorController {
 			case "5":
 				this._handleFileContentPackage(message.substring(1));
 				break;
+			case "6":
+				this._handleChangeInFilePackage(message.substring(1));
+				break;
 			case "9":
 				this._handleProjectData(JSON.parse(message.substring(1)));
 				break;
@@ -243,6 +246,30 @@ export default class EditorController {
 		}
 	}
 
+	_handleChangeInFilePackage = (message) => {
+		console.log(message);//TODO
+		let fileIdRangesAndChangeId = message.split(" ", 6);
+		if (fileIdRangesAndChangeId.length !== 6) {
+			console.log("Could not extract changes position, id and file id from incoming change in file package");
+		}
+		let [fileId, startRow, startColumn, endRow, endColumn, changeId] = fileIdRangesAndChangeId.map((str) =>parseInt(str));
+		let startingIndexOfChangeContent = 6 + fileIdRangesAndChangeId.reduce((total, currentStr) => {return total + currentStr.length}, 0);
+		let changeContent = message.substring(startingIndexOfChangeContent);
+		console.log(`Appling change "${changeContent}"`);
+		if(fileId !== this.openedFile.id){
+			console.log(`Recived change for file ${fileId} but currently we are edditing ${this.openedFile.id}`)
+			return;
+		}
+		console.log("----- BEFORE -----")
+		console.table(this.realFileContentSession.getValue().split("\n"))
+		this.realFileContentSession.replace(new ace.Range(startRow, startColumn, endRow, endColumn-1), changeContent);
+		console.log("----- AFTER  -----")
+		console.table(this.realFileContentSession.getValue().split("\n"))
+		// this.realFileContentSession.insert({row: startRow, column: startColumn}, changeContent, true);
+		this.view.showFileContent(this.realFileContentSession.getValue());
+	}
+
+
 	_handleFileContentPackage(message) {
 		const indexOfFirstSpace = message.indexOf(" ");
 		const fileId = parseInt(message.substring(0, indexOfFirstSpace));
@@ -250,8 +277,8 @@ export default class EditorController {
 			console.log(`Recived contetn of file ${fileId} but currently opened file is ${this.openedFile.id}`);
 			return;
 		}
-		this.realFileContent = message.substring(indexOfFirstSpace + 1);
-		this.view.showFileContent(this.realFileContent);
+		this.realFileContentSession = ace.createEditSession(message.substring(indexOfFirstSpace + 1));
+		this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 	_handleFileDeletedPackage(message) {
@@ -399,6 +426,7 @@ export default class EditorController {
 	 * @param {FileChange} fileChange
 	 */
 	handleChange(fileChange) {
+		console.clear();
 		/** @type {Change}*/
 		const change = {
 			start: {
@@ -409,14 +437,15 @@ export default class EditorController {
 				row: fileChange.end.row,
 				column: fileChange.end.column,
 			},
-			lines: fileChange.action === "remove" ? [] : fileChange.lines
+			lines: fileChange.action === "remove" ? [] : fileChange.lines,
+			lastChangeApplied: this.lastAppliedChangeId
 		}
-		console.log("File CHange " + JSON.stringify(fileChange))
-		console.log("CHange " + JSON.stringify(change))
+		console.log("File Change " + JSON.stringify(fileChange))
+		console.log("Change " + JSON.stringify(change))
 		this.changesCache.addLocalChange(change);
 
 
-		this.view.showFileContent(this.realFileContent);
+		this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 	// disconnect = () => {

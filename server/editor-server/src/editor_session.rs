@@ -4,11 +4,9 @@ use actix::*;
 use actix_web_actors::ws;
 use crate::server;
 use crate::models::User;
-use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated, FileDeleted};
+use crate::server::{ProjectInfoDto, ErrorMessage, FileCreated, FileDeleted, ChangeInFile};
 use log::{error, info, warn};
 use serde::Deserialize;
-use actix_http::cookie::SameSite::Strict;
-use std::num::ParseIntError;
 
 
 const INCOMING_CODE_NEW_FILE: &str = "1";
@@ -125,6 +123,16 @@ impl Handler<server::Message> for EditorSession {
 	}
 }
 
+impl Handler<server::ChangeInFile> for EditorSession{
+	type Result = ();
+
+	fn handle(&mut self, msg: ChangeInFile, ctx: &mut Self::Context) -> Self::Result {
+		let message =format!("6{} {} {} {} {} {} {}", msg.file_id, msg.start_row, msg.start_column, msg.end_row, msg.end_column, msg.change_id, msg.change);
+		println!("{}", message);
+		ctx.text(message);
+	}
+}
+
 impl Handler<server::ProjectInfoDto> for EditorSession {
 	type Result = ();
 
@@ -174,6 +182,7 @@ impl Handler<server::FileContent> for EditorSession {
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct FileChange {
+	pub session_id: i32,
 	pub start: Position,
 	pub end: Position,
 	pub file_id: i32,
@@ -262,7 +271,7 @@ impl EditorSession {
 				println!("Rename file request");
 			}
 			INCOMING_CODE_CHANGE_IN_FILE => {
-				self.handle_incoming_change_in_file_message(message);
+				self.handle_incoming_change_in_file_message(incoming_message);
 				info!("Incoming change in file")
 			}
 			INCOMING_CODE_GET_FILE_CONTENT => {
@@ -286,7 +295,7 @@ impl EditorSession {
 		}
 	}
 
-	fn handle_incoming_change_in_file_message(&self, message: String) {
+	fn handle_incoming_change_in_file_message(&self, message: &str) {
 		let splitted_message: Vec<&str> = message.splitn(7, " ").collect();
 		if splitted_message.len() != 7 {
 			error!("Illegal change in file package sent: could not split in 7 required parts");
@@ -337,10 +346,11 @@ impl EditorSession {
 		};
 
 		self.addr.do_send(FileChange {
+			session_id: self.id,
 			start,
 			end,
 			file_id,
-			lines: splitted_message[6].split(" ").map(|str_ref| { return str_ref.to_owned(); }).collect(),
+			lines: splitted_message[6].split("\n").map(|str_ref| { return str_ref.to_owned(); }).collect(),
 			last_change_applied_id,
 		})
 	}

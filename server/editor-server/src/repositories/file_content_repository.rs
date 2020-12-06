@@ -1,7 +1,5 @@
 use crate::repositories::get_client;
 use log::{info, warn, error};
-use std::process::id;
-use postgres::Error;
 
 /// Allows to manipulate single file content
 pub trait IFileContentRepository {

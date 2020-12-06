@@ -156,10 +156,17 @@ export default class EditorView {
 	 *
 	 * @param {string} content file content as string
 	 */
-	showFileContent(content) {
+	showFileContent = (content) => {
 		const cursorPreChange = this.editor.selection.getCursor();
-		this.editor.session.setValue(content, true);
-		this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
+		this.editor.setValue(content,null, true);
+		console.log("CONTENT set to")
+		console.table(content.split("\n"));
+		console.log("REal set")
+		console.table(this.editor.session.getValue().split("\n"))
+		const e = document.getElementById("editor");
+		console.log(`Are equal: ${content == this.editor.getValue()}`)
+		ace.edit("editor")
+		// this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
 	}
 
 	/**

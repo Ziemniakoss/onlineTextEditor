@@ -343,7 +343,29 @@ impl Handler<editor_session::FileChange> for EditorServer {
 	type Result = ();
 
 	fn handle(&mut self, msg: editor_session::FileChange, _: &mut Context<Self>) {
-		println!("Server recived file change {:#?}", msg);
+		println!("Server recived file change {:?}", msg);
+		let session_data;
+		match self.sessions_2.get(&msg.session_id){
+			Some(data) => session_data = data,
+			None => {
+				error!("Not registered session sent change in file");
+				return;
+			}
+		}
+		let change = ChangeInFile{
+			file_id: msg.file_id,
+			start_row: msg.start.row,
+			start_column: msg.start.column,
+			end_row: msg.end.row,
+			end_column: msg.end.column,
+			change_id: self.rng.gen::<i32>(),
+			change: msg.lines.join("\n")
+		};
+		self.sessions_2
+			.values()
+			.filter(|session| {return session.project_id == session_data.project_id})
+			.for_each(|session|  {session.recipient.do_send(change.clone())});
+		//TODO persistance
 	}
 }
 
