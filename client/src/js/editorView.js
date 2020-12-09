@@ -41,6 +41,10 @@ export default class EditorView {
 		})
 	}
 
+	simulateChange(range, content){
+		this.editor.session.replace(range, content)
+	}
+
 	_selectInitialTheme() {
 		let theme = localStorage.getItem("theme");
 		if (theme == null) {
@@ -158,15 +162,16 @@ export default class EditorView {
 	 */
 	showFileContent = (content) => {
 		const cursorPreChange = this.editor.selection.getCursor();
-		this.editor.setValue(content,null, true);
+		this.editor.setValue(content, null, true);
+		this.editor.renderer.updateText();
+		this.editor.renderer.updateFull();
 		console.log("CONTENT set to")
 		console.table(content.split("\n"));
 		console.log("REal set")
 		console.table(this.editor.session.getValue().split("\n"))
 		const e = document.getElementById("editor");
 		console.log(`Are equal: ${content == this.editor.getValue()}`)
-		ace.edit("editor")
-		// this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
+		this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
 	}
 
 	/**
@@ -178,6 +183,14 @@ export default class EditorView {
 		}
 		this.editor.session.setMode(`ace/mode/${mode}`);
 
+	}
+
+	replaceText(range, text){
+		console.log("----- before replace in view ------")
+		console.table(this.editor.getValue().split("\n"))
+		this.editor.session.replace(range, text, true, false);
+		console.log("----- after replace in view ------")
+		console.table(this.editor.getValue().split("\n"))
 	}
 
 	/**

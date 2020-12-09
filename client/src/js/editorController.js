@@ -260,13 +260,11 @@ export default class EditorController {
 			console.log(`Recived change for file ${fileId} but currently we are edditing ${this.openedFile.id}`)
 			return;
 		}
-		console.log("----- BEFORE -----")
-		console.table(this.realFileContentSession.getValue().split("\n"))
-		this.realFileContentSession.replace(new ace.Range(startRow, startColumn, endRow, endColumn-1), changeContent);
-		console.log("----- AFTER  -----")
-		console.table(this.realFileContentSession.getValue().split("\n"))
-		// this.realFileContentSession.insert({row: startRow, column: startColumn}, changeContent, true);
-		this.view.showFileContent(this.realFileContentSession.getValue());
+		// this.realFileContentSession.replace(new ace.Range(startRow, startColumn, endRow, endColumn-1), changeContent);
+		const range = new ace.Range(startRow, startColumn, endRow, endColumn)
+		console.log("CHANGEING " + JSON.stringify(range) + " to " + JSON.stringify(changeContent));
+		this.view.replaceText(range, changeContent)
+		// this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 
@@ -426,7 +424,7 @@ export default class EditorController {
 	 * @param {FileChange} fileChange
 	 */
 	handleChange(fileChange) {
-		console.clear();
+		// console.clear();
 		/** @type {Change}*/
 		const change = {
 			start: {
@@ -443,9 +441,7 @@ export default class EditorController {
 		console.log("File Change " + JSON.stringify(fileChange))
 		console.log("Change " + JSON.stringify(change))
 		this.changesCache.addLocalChange(change);
-
-
-		this.view.showFileContent(this.realFileContentSession.getValue());
+		// this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 	// disconnect = () => {
