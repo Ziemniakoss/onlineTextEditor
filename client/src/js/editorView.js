@@ -24,6 +24,11 @@ export default class EditorView {
 
 	init() {
 		document.getElementById("theme-selector").addEventListener("change", (event) => {
+			console.log(event);
+			if(event.cancelSignal){
+				console.log("Canceling")
+				return;
+			}
 			const newTheme = event.target.value
 			this.editor.setTheme(`ace/theme/${newTheme}`);
 			localStorage.setItem("theme", newTheme);
@@ -163,14 +168,6 @@ export default class EditorView {
 	showFileContent = (content) => {
 		const cursorPreChange = this.editor.selection.getCursor();
 		this.editor.setValue(content, null, true);
-		this.editor.renderer.updateText();
-		this.editor.renderer.updateFull();
-		console.log("CONTENT set to")
-		console.table(content.split("\n"));
-		console.log("REal set")
-		console.table(this.editor.session.getValue().split("\n"))
-		const e = document.getElementById("editor");
-		console.log(`Are equal: ${content == this.editor.getValue()}`)
 		this.editor.gotoLine(cursorPreChange.row + 1, cursorPreChange.column)
 	}
 
@@ -186,11 +183,7 @@ export default class EditorView {
 	}
 
 	replaceText(range, text){
-		console.log("----- before replace in view ------")
-		console.table(this.editor.getValue().split("\n"))
 		this.editor.session.replace(range, text, true, false);
-		console.log("----- after replace in view ------")
-		console.table(this.editor.getValue().split("\n"))
 	}
 
 	/**

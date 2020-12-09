@@ -121,7 +121,6 @@ export default class EditorController {
 	 */
 	async init() {
 		const projectId = new URL(window.location).searchParams.get("project_id")
-		console.log("Project id " + projectId);
 		this.connect(projectId)
 	}
 
@@ -155,7 +154,7 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async deleteFile(id) {
-		console.log("Deleteing file " + id);
+		log("Deleteing file " + id);
 		this.webosocket.send(`2${id}`);
 	}
 
@@ -196,7 +195,6 @@ export default class EditorController {
 	sendChangesToServer(changes) {
 		changes.forEach(change => {
 			const message = this._convertChangeToMessage(change);
-			console.log("Sending change: " + message);
 			this.webosocket.send(message);
 		})
 	}
@@ -217,7 +215,6 @@ export default class EditorController {
 	 * @param message
 	 */
 	parseMessage = (message) => {
-		console.log(`Received message: '${message}'`)
 		switch (message[0]) {
 			case "1":
 				this._handleNewSessionPackage(message.substring(1));
@@ -247,7 +244,6 @@ export default class EditorController {
 	}
 
 	_handleChangeInFilePackage = (message) => {
-		console.log(message);//TODO
 		let fileIdRangesAndChangeId = message.split(" ", 6);
 		if (fileIdRangesAndChangeId.length !== 6) {
 			console.log("Could not extract changes position, id and file id from incoming change in file package");
@@ -255,16 +251,11 @@ export default class EditorController {
 		let [fileId, startRow, startColumn, endRow, endColumn, changeId] = fileIdRangesAndChangeId.map((str) =>parseInt(str));
 		let startingIndexOfChangeContent = 6 + fileIdRangesAndChangeId.reduce((total, currentStr) => {return total + currentStr.length}, 0);
 		let changeContent = message.substring(startingIndexOfChangeContent);
-		console.log(`Appling change "${changeContent}"`);
-		if(fileId !== this.openedFile.id){
-			console.log(`Recived change for file ${fileId} but currently we are edditing ${this.openedFile.id}`)
+		if(this.openedFile == null || fileId !== this.openedFile.id){
 			return;
 		}
-		// this.realFileContentSession.replace(new ace.Range(startRow, startColumn, endRow, endColumn-1), changeContent);
 		const range = new ace.Range(startRow, startColumn, endRow, endColumn)
-		console.log("CHANGEING " + JSON.stringify(range) + " to " + JSON.stringify(changeContent));
 		this.view.replaceText(range, changeContent)
-		// this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 
@@ -284,7 +275,7 @@ export default class EditorController {
 		console.log(`File ${fileId} was deleted`);
 		this.files = this.files.filter(file => file.id !== fileId);
 		this.view.showFilesList(this.files);
-		if (fileId === this.openedFile.id) {
+		if (this.openedFile != null && fileId === this.openedFile.id) {
 			this.view.hideEditor();
 		}
 	}
@@ -308,7 +299,6 @@ export default class EditorController {
 		const indexOfFirstSpace = message.indexOf(" ");
 		const id = message.substring(0, indexOfFirstSpace);
 		const name = message.substring(indexOfFirstSpace + 1);
-		console.log(`New file ${name} with id ${id} was created`);
 		this.files.push(new File(id, name))
 		this.files.sort(((a, b) => {
 			if (a.name > b.name) {
@@ -424,7 +414,6 @@ export default class EditorController {
 	 * @param {FileChange} fileChange
 	 */
 	handleChange(fileChange) {
-		// console.clear();
 		/** @type {Change}*/
 		const change = {
 			start: {
@@ -441,7 +430,6 @@ export default class EditorController {
 		console.log("File Change " + JSON.stringify(fileChange))
 		console.log("Change " + JSON.stringify(change))
 		this.changesCache.addLocalChange(change);
-		// this.view.showFileContent(this.realFileContentSession.getValue());
 	}
 
 	// disconnect = () => {
