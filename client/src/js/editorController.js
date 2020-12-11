@@ -154,7 +154,7 @@ export default class EditorController {
 	 * @return {Promise<void>}
 	 */
 	async deleteFile(id) {
-		log("Deleteing file " + id);
+		console.log("Deleteing file " + id);
 		this.webosocket.send(`2${id}`);
 	}
 
@@ -246,7 +246,7 @@ export default class EditorController {
 	_handleChangeInFilePackage = (message) => {
 		let fileIdRangesAndChangeId = message.split(" ", 6);
 		if (fileIdRangesAndChangeId.length !== 6) {
-			console.log("Could not extract changes position, id and file id from incoming change in file package");
+			console.error("Could not extract changes position, id and file id from incoming change in file package");
 		}
 		let [fileId, startRow, startColumn, endRow, endColumn, changeId] = fileIdRangesAndChangeId.map((str) =>parseInt(str));
 		let startingIndexOfChangeContent = 6 + fileIdRangesAndChangeId.reduce((total, currentStr) => {return total + currentStr.length}, 0);
@@ -427,8 +427,6 @@ export default class EditorController {
 			lines: fileChange.action === "remove" ? [] : fileChange.lines,
 			lastChangeApplied: this.lastAppliedChangeId
 		}
-		console.log("File Change " + JSON.stringify(fileChange))
-		console.log("Change " + JSON.stringify(change))
 		this.changesCache.addLocalChange(change);
 	}
 

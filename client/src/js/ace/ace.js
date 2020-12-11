@@ -7331,7 +7331,6 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 			return this.clonePos(end);
 		};
 		this.remove = function (range, cancelSignal, cancelChange) {
-			console.log(`Remove 1 !signal ${cancelSignal} !change ${cancelChange}`)
 			var start = this.clippedPos(range.start.row, range.start.column);
 			var end = this.clippedPos(range.end.row, range.end.column);
 			this.applyDelta({
@@ -7386,7 +7385,6 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 			}
 		};
 		this.replace = function (range, text, cancelSignal, cancelChange) {
-			console.log("Replace")
 			if (!(range instanceof Range))
 				range = Range.fromPoints(range.start, range.end);
 			if (text.length === 0 && range.isEmpty())
@@ -7397,7 +7395,6 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 			this.remove(range, cancelSignal, cancelChange);
 			var end;
 			if (text) {
-				console.log(`Replace insert ${cancelSignal} ${cancelChange}`)
 				end = this.insert(range.start, text, cancelSignal, cancelChange);
 			} else {
 				end = range.start;
@@ -7417,7 +7414,6 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 		};
 
 		this.applyDelta = function (delta, doNotValidate, cancelSignal, cancelChange) {
-			console.trace("Apply delta with cancel signal " + JSON.stringify(cancelSignal) + " cancel change " + JSON.stringify(cancelChange))
 			var isInsert = delta.action == "insert";
 			if (isInsert ? delta.lines.length <= 1 && !delta.lines[0]
 				: !Range.comparePoints(delta.start, delta.end)) {
@@ -13469,7 +13465,6 @@ define("ace/editor", ["require", "exports", "module", "ace/lib/fixoldbrowsers", 
 				cursor = this.session.remove(range, false, true);
 				this.clearSelection();
 			} else if (this.session.getOverwrite() && text.indexOf("\n") == -1) {
-				console.log("aaa")
 				var range = new Range.fromPoints(cursor, cursor);
 				range.end.column += text.length;
 				this.session.remove(range, true, true);

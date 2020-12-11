@@ -24,11 +24,6 @@ export default class EditorView {
 
 	init() {
 		document.getElementById("theme-selector").addEventListener("change", (event) => {
-			console.log(event);
-			if(event.cancelSignal){
-				console.log("Canceling")
-				return;
-			}
 			const newTheme = event.target.value
 			this.editor.setTheme(`ace/theme/${newTheme}`);
 			localStorage.setItem("theme", newTheme);
@@ -37,6 +32,9 @@ export default class EditorView {
 		this.editor.session.setMode("ace/mode/text");
 
 		this.editor.session.on("change", (c) => {
+			if(c.cancelSignal){
+				return;
+			}
 			this.controller.handleChange(c);
 		})
 
