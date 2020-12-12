@@ -420,10 +420,7 @@ export default class EditorController {
 				row: fileChange.start.row,
 				column: fileChange.start.column
 			},
-			end: {
-				row: fileChange.end.row,
-				column: fileChange.end.column,
-			},
+			end: fileChange.action ==="remove" ? fileChange.end : fileChange.start,
 			lines: fileChange.action === "remove" ? [] : fileChange.lines,
 			lastChangeApplied: this.lastAppliedChangeId
 		}
