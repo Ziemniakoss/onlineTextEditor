@@ -183,17 +183,54 @@ impl EditorServer {
 		if change.start == change.end && change.lines.is_empty() {
 			return;
 		}
-		if change.lines.is_empty() {
-			self.apply_deletion(change);
-		} else if change.start == change.end {
+
+		if change.start == change.end {
 			self.apply_insertion(change);
 		} else {
-			self.apply_replace(change);
+			self.apply_deletion(change);
 		}
 	}
 
 	fn apply_deletion(&self, change: &FileChange) {
+		if change.start.row == change.end.row {
+			println!("SINGLE LINE DELTETION");
+			self.apply_single_line_deletion(change);
+		} else {
+			println!("MUTLI DELETE");
+			self.apply_multi_line_deletion(change);
+		}
+	}
+
+	fn apply_single_line_deletion(&self, change: &FileChange) {
 		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
+		let current_line_value;
+		match file_content_repository.get_line(change.start.row) {
+			Some(line) => {
+				current_line_value = line;
+				let prefix_cutting_index = min(change.start.column as usize, current_line_value.len());
+				let prefix :String= current_line_value.chars()
+					.take(prefix_cutting_index)
+					.collect();
+
+				let suffix:String= current_line_value.chars()
+					.skip(change.end.column as usize)
+					.collect();
+				println!("New line value after deletion in line  separated \"{}\" \"{}\"", prefix, suffix);
+				println!("New line value after deletion in line \"{}{}\"", prefix, suffix);
+				file_content_repository.update(change.start.row, format!("{}{}",  prefix, suffix));
+			}
+			None => {
+				warn!("Someone tried to remove part of line {} in file {}, but this line does not exists", change.file_id, change.start.row);
+				return;
+			}
+		}
+
+
+	}
+
+	fn apply_multi_line_deletion(&self, change: &FileChange) {
+		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
+
 	}
 
 	fn apply_insertion(&self, change: &FileChange) {
@@ -205,15 +242,16 @@ impl EditorServer {
 	}
 
 	fn apply_single_line_insertion(&self, change: &FileChange) {
-		println!("SINGLE LUINE EDITION");
 		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
 		match file_content_repository.get_line(change.start.row) {
 			Some(current_line) => {
 				let prefix_cutting_index = min(change.start.column, current_line.len() as u32) as usize;
-				println!("Cutting at len {} len {}", prefix_cutting_index, current_line.len());
-				let prefix = &current_line[0..prefix_cutting_index];
-				let suffix = &current_line[(prefix_cutting_index)..current_line.len()];
-				println!("\"{}\" \"{}\" \"{}\"", prefix, change.lines[0], suffix);
+				let prefix :String = current_line.chars()
+					.take(prefix_cutting_index)
+					.collect();
+				let suffix :String= current_line.chars()
+					.skip(prefix_cutting_index)
+					.collect();
 				file_content_repository.update(change.start.row, format!("{}{}{}", prefix, change.lines[0], suffix));
 			}
 			None => {
@@ -227,7 +265,10 @@ impl EditorServer {
 		match file_content_repository.get_line(change.start.row) {
 			Some(current_row) => {
 				let cutting_index = min(change.start.column, current_row.len() as u32) as usize;
-				println!("Setting \"{}\" \"{}\"", &current_row[0..cutting_index], change.lines[0]);
+				let prefix :String= current_row.chars()
+					.take(cutting_index)
+					.collect();
+				println!("Setting \"{}\" \"{}\"", prefix, change.lines[0]);
 
 				let new_row_value = format!("{}{}", &current_row[0..cutting_index], change.lines[0]);
 				println!("Updating line {} to new value \"{}\"", change.start.row, new_row_value);
@@ -241,7 +282,7 @@ impl EditorServer {
 		for i in 1..(change.lines.len() - 1) as u32 {
 			file_content_repository.insert_new_line(i + change.start.row, Some(change.lines[i as usize].clone()));
 		}
-		let last_line_index = (change.lines.len() as u32) + change.start.row -1;
+		let last_line_index = (change.lines.len() as u32) + change.start.row - 1;
 		match file_content_repository.get_line(last_line_index) {
 			Some(current_last_line_value) => {
 				file_content_repository.update(last_line_index, format!("{}{}", change.lines[change.lines.len() - 1], current_last_line_value))
@@ -250,10 +291,6 @@ impl EditorServer {
 				file_content_repository.insert_new_line(last_line_index, Some(change.lines[change.lines.len() - 1].clone()));
 			}
 		}
-	}
-
-	fn apply_replace(&self, _change: &FileChange) {
-		warn!("OO stinky")
 	}
 }
 
