@@ -1,4 +1,4 @@
-use crate::models::{Project, User, ProjectFile};
+use crate::models::{ User, ProjectFile};
 use crate::services::projects::GetError;
 use crate::repositories::projects_files::{IProjectsFilesRepository, ProjectFileUpdateError, ProjectFileCreationError};
 
@@ -41,8 +41,6 @@ pub fn new(user_id: i32, project_id: i32) -> Result<Box<dyn IProjectsFilesServic
 	let project_service = crate::services::projects::new(User { id: user_id, name: user.name.clone() });
 	return match project_service.get(project_id) {
 		Ok(project) => Ok(Box::new(ProjectsFilesService {
-			user,
-			project: project.clone(),
 			project_files_repository: crate::repositories::projects_files::new(project),
 		})),
 		Err(err) => match err {
@@ -53,8 +51,6 @@ pub fn new(user_id: i32, project_id: i32) -> Result<Box<dyn IProjectsFilesServic
 }
 
 struct ProjectsFilesService {
-	user: User,
-	project: Project,
 	project_files_repository: Box<dyn IProjectsFilesRepository>,
 }
 

@@ -254,6 +254,7 @@ export default class EditorController {
 		if(this.openedFile == null || fileId !== this.openedFile.id){
 			return;
 		}
+		this.lastAppliedChangeId = changeId;
 		const range = new ace.Range(startRow, startColumn, endRow, endColumn)
 		this.view.replaceText(range, changeContent)
 	}
@@ -424,6 +425,7 @@ export default class EditorController {
 			lines: fileChange.action === "remove" ? [] : fileChange.lines,
 			lastChangeApplied: this.lastAppliedChangeId
 		}
+		console.log(JSON.stringify(change));
 		this.changesCache.addLocalChange(change);
 	}
 

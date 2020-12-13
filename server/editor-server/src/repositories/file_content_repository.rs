@@ -12,6 +12,8 @@ pub trait IFileContentRepository {
     fn insert_new_line(&self, index: u32, content: Option<String>);
 
     fn update(&self, index: u32, content: String);
+
+    fn get_lines(&self, from_inclusive: u32, to_inclusive: u32) -> Vec<String>;
 }
 
 pub fn new(file_id: i32) -> Box<dyn IFileContentRepository> {
@@ -35,10 +37,12 @@ impl IFileContentRepository for FileContentRepository {
     fn get_line(&self, index: u32) -> Option<String> {
         return match get_client()
             .query_one("SELECT content FROM files_lines WHERE file_id = $1 AND line_number = $2",
-                                            &[&self.file_id, &index],
+                                            &[&self.file_id, &(index as i32)],
         ) {
             Ok(row) => Some(row.get(0)),
-            Err(_) => None
+            Err(err) => {
+                error!("Error while retriving line {}: {}", index, err);
+                None}
         };
     }
 
@@ -54,7 +58,7 @@ impl IFileContentRepository for FileContentRepository {
 
     fn insert_new_line(&self, index: u32, content: Option<String>) {
         let result_code: i32 = get_client()
-            .query_one("SELECT * FROM insert_line_in_file($1, $2, $2)", &[&self.file_id, &index, &content])
+            .query_one("SELECT * FROM insert_line_in_file($1, $2, $3)", &[&self.file_id, &(index as i32), &content])
             .unwrap()
             .get(0);
         match result_code {
@@ -66,9 +70,21 @@ impl IFileContentRepository for FileContentRepository {
 
     fn update(&self, index: u32, content: String) {
         match get_client()
-            .execute("UPDATE files_lines SET content = $1 WHERE file_id = $2 AND line_number = $3", &[&content, &self.file_id, &index]){
+            .execute("UPDATE files_lines SET content = $1 WHERE file_id = $2 AND line_number = $3", &[&content, &self.file_id, &(index as i32)]){
             Ok(_) => info!("Updated line {} in file {}", index, self.file_id),
             Err(err) => error!("Failed to update line {} in line {}: {}", index, self.file_id, err)
         }
     }
+
+    fn get_lines(&self, from_inclusive: u32, to_inclusive: u32) -> Vec<String> {
+        get_client()
+            .query("SELECT content FROM files_lines WHERE file_id = $1 AND line_number >= $2 AND line_number <= $3 ORDER BY line_number",
+                   &[&self.file_id, &from_inclusive, &to_inclusive])
+            .unwrap()
+            .iter()
+            .map(|row| {return row.get(0)})
+            .collect()
+    }
+
+
 }

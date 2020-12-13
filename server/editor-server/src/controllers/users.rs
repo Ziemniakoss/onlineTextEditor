@@ -5,7 +5,7 @@ use actix_web::http::StatusCode;
 use serde::Deserialize;
 use actix_session::Session;
 use crate::session_manager::{get_user_id, set_user_id};
-use log::{error, info};
+use log::{ info};
 
 
 #[post("/login")]

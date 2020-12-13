@@ -13439,7 +13439,6 @@ define("ace/editor", ["require", "exports", "module", "ace/lib/fixoldbrowsers", 
 			return this.commands.exec(command, this, args);
 		};
 		this.insert = function (text, pasted) {
-			console.table([text, pasted])
 			var session = this.session;
 			var mode = session.getMode();
 			var cursor = this.getCursorPosition();

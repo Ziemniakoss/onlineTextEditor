@@ -3,11 +3,14 @@ use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 use std::collections::{HashMap};
 use crate::editor_session;
-use crate::editor_session::{FileCreationRequest, EditorSession, FileDeletionRequest};
+use crate::editor_session::{FileCreationRequest, EditorSession, FileDeletionRequest, FileChange};
 use crate::models::{User, Project, ProjectFile};
 use log::{info, error, warn};
 use serde::Serialize;
 use crate::services::projects_files::CreationError;
+use crate::repositories::file_content_repository::new;
+use std::borrow::Borrow;
+use std::cmp::min;
 
 
 #[derive(Message)]
@@ -174,6 +177,83 @@ impl EditorServer {
 	///
 	fn send_error(&self, addr: &Addr<EditorSession>, msg: String) {
 		addr.do_send(ErrorMessage { msg });
+	}
+
+	fn apply_change(&self, change: &FileChange) {
+		if change.start == change.end && change.lines.is_empty() {
+			return;
+		}
+		if change.lines.is_empty() {
+			self.apply_deletion(change);
+		} else if change.start == change.end {
+			self.apply_insertion(change);
+		} else {
+			self.apply_replace(change);
+		}
+	}
+
+	fn apply_deletion(&self, change: &FileChange) {
+		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
+	}
+
+	fn apply_insertion(&self, change: &FileChange) {
+		if change.lines.len() == 1 {
+			self.apply_single_line_insertion(change);
+		} else {
+			self.apply_multi_line_insertion(change);
+		}
+	}
+
+	fn apply_single_line_insertion(&self, change: &FileChange) {
+		println!("SINGLE LUINE EDITION");
+		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
+		match file_content_repository.get_line(change.start.row) {
+			Some(current_line) => {
+				let prefix_cutting_index = min(change.start.column, current_line.len() as u32) as usize;
+				println!("Cutting at len {} len {}", prefix_cutting_index, current_line.len());
+				let prefix = &current_line[0..prefix_cutting_index];
+				let suffix = &current_line[(prefix_cutting_index)..current_line.len()];
+				println!("\"{}\" \"{}\" \"{}\"", prefix, change.lines[0], suffix);
+				file_content_repository.update(change.start.row, format!("{}{}{}", prefix, change.lines[0], suffix));
+			}
+			None => {
+				file_content_repository.insert_new_line(change.start.row, Some(change.lines[0].clone()));
+			}
+		}
+	}
+
+	fn apply_multi_line_insertion(&self, change: &FileChange) {
+		let file_content_repository = crate::repositories::file_content_repository::new(change.file_id);
+		match file_content_repository.get_line(change.start.row) {
+			Some(current_row) => {
+				let cutting_index = min(change.start.column, current_row.len() as u32) as usize;
+				println!("Setting \"{}\" \"{}\"", &current_row[0..cutting_index], change.lines[0]);
+
+				let new_row_value = format!("{}{}", &current_row[0..cutting_index], change.lines[0]);
+				println!("Updating line {} to new value \"{}\"", change.start.row, new_row_value);
+				file_content_repository.update(change.start.row, new_row_value);
+			}
+			None => {
+				file_content_repository.insert_new_line(change.start.row, Some(change.lines[0].to_owned()));
+				println!("Insering new line index {}", change.start.row);
+			}
+		}
+		for i in 1..(change.lines.len() - 1) as u32 {
+			file_content_repository.insert_new_line(i + change.start.row, Some(change.lines[i as usize].clone()));
+		}
+		let last_line_index = (change.lines.len() as u32) + change.start.row -1;
+		match file_content_repository.get_line(last_line_index) {
+			Some(current_last_line_value) => {
+				file_content_repository.update(last_line_index, format!("{}{}", change.lines[change.lines.len() - 1], current_last_line_value))
+			}
+			None => {
+				file_content_repository.insert_new_line(last_line_index, Some(change.lines[change.lines.len() - 1].clone()));
+			}
+		}
+	}
+
+	fn apply_replace(&self, _change: &FileChange) {
+		warn!("OO stinky")
 	}
 }
 
@@ -345,27 +425,27 @@ impl Handler<editor_session::FileChange> for EditorServer {
 	fn handle(&mut self, msg: editor_session::FileChange, _: &mut Context<Self>) {
 		println!("Server recived file change {:?}", msg);
 		let session_data;
-		match self.sessions_2.get(&msg.session_id){
+		match self.sessions_2.get(&msg.session_id) {
 			Some(data) => session_data = data,
 			None => {
 				error!("Not registered session sent change in file");
 				return;
 			}
 		}
-		let change = ChangeInFile{
+		let change = ChangeInFile {
 			file_id: msg.file_id,
 			start_row: msg.start.row,
 			start_column: msg.start.column,
 			end_row: msg.end.row,
 			end_column: msg.end.column,
 			change_id: self.rng.gen::<i32>(),
-			change: msg.lines.join("\n")
+			change: msg.lines.join("\n"),
 		};
+		self.apply_change(&msg);
 		self.sessions_2
 			.values()
-			.filter(|session| {return session.project_id == session_data.project_id})
-			.for_each(|session|  {session.recipient.do_send(change.clone())});
-		//TODO persistance
+			.filter(|session| { return session.project_id == session_data.project_id; })
+			.for_each(|session| { session.recipient.do_send(change.clone()) });
 	}
 }
 

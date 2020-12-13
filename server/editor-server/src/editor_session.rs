@@ -128,7 +128,6 @@ impl Handler<server::ChangeInFile> for EditorSession{
 
 	fn handle(&mut self, msg: ChangeInFile, ctx: &mut Self::Context) -> Self::Result {
 		let message =format!("6{} {} {} {} {} {} {}", msg.file_id, msg.start_row, msg.start_column, msg.end_row, msg.end_column, msg.change_id, msg.change);
-		println!("{}", message);
 		ctx.text(message);
 	}
 }
@@ -196,6 +195,12 @@ pub struct Position {
 	pub column: u32,
 }
 
+impl  std::cmp::PartialEq for Position{
+	fn eq(&self, other: &Self) -> bool {
+		self.row == other.row && self.column == other.column
+	}
+}
+
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	fn handle(
@@ -205,7 +210,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	) {
 		let msg = match msg {
 			Err(error) => {
-				println!("Error un stream handler: {:?}", error);
+				error!("Error un stream handler: {:?}", error);
 				ctx.stop();
 				return;
 			}
@@ -224,7 +229,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 			ws::Message::Text(text) => {
 				self.parse_message_and_send_to_server(text, ctx);
 			}
-			ws::Message::Binary(_) => println!("Unexpected binary"),
+			ws::Message::Binary(bytes) => {
+				warn!("Unexpected binary: {:?} {}", bytes, bytes.len());
+			},
 			ws::Message::Close(reason) => {
 				ctx.close(reason);
 				ctx.stop();
@@ -237,7 +244,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for EditorSession {
 	}
 }
 
-impl EditorSession {
+impl  EditorSession {
 	fn parse_message_and_send_to_server(&self, message: String, _: &mut ws::WebsocketContext<Self>) {
 		if message.len() <= 1 {
 			warn!("Incoming empty message or message with only code and no content form editor session {}: {}", self.id, message);
@@ -246,7 +253,7 @@ impl EditorSession {
 		let (incoming_code, incoming_message) = message.split_at(1);
 		match incoming_code {
 			INCOMING_CODE_NEW_FILE => {
-				println!("New file req, file name {}", incoming_message);
+				info!("New file req, file name {}", incoming_message);
 				self.addr.do_send(FileCreationRequest {
 					session_id: self.id,
 					filename: incoming_message.to_owned(),
@@ -257,7 +264,7 @@ impl EditorSession {
 				match incoming_message.parse::<i32>() {
 					Ok(id) => file_id = id,
 					Err(_) => {
-						println!("Unparsable file id");
+						warn!("Unparsable file id");
 						return;
 					}
 				}
@@ -268,7 +275,7 @@ impl EditorSession {
 				});
 			}
 			INCOMING_CODE_RENAME_FILE => {
-				println!("Rename file request");
+				info!("Rename file request");
 			}
 			INCOMING_CODE_CHANGE_IN_FILE => {
 				self.handle_incoming_change_in_file_message(incoming_message);
@@ -290,7 +297,7 @@ impl EditorSession {
 				})
 			}
 			_ => {
-				println!("Unknown message code: {} of message in session {}", incoming_code, self.id);
+				error!("Unknown message code: {} of message in session {}", incoming_code, self.id);
 			}
 		}
 	}
@@ -393,7 +400,7 @@ impl EditorSession {
 			// check client heartbeats
 			if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
 				// heartbeat timed out
-				println!("Websocket Client heartbeat failed, disconnecting!");
+				info!("Websocket Client heartbeat failed, disconnecting!");
 				// notify chat server
 				act.addr.do_send(Disconnect { session_id: act.id });
 				// stop actor

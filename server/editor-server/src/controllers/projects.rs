@@ -6,7 +6,7 @@ use actix_http::http::{StatusCode};
 use serde::Deserialize;
 use crate::repositories::users::{get_user};
 use crate::services::projects;
-use log::{error, warn, info};
+use log::{error, warn};
 use crate::services::projects::{SaveError, AccessGrantingError, AccessRevokingError};
 use actix::*;
 use actix_web_actors::ws;
