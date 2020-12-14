@@ -19,12 +19,33 @@ Ten skrypt zawiera istrukcje wpisane powyżej + komendę do otwarcia przeglądar
 Może sie w tym przypadku zdarzyć, że przeglądarka spróbuje załadować strone przed postawieniem dockera. Rozwiązanie to
 po prostu przełądować stronę.
 
+### Uwagi co do uruchamiania
+
+Ze względów na sposób działania CORS w różnych przeglądarkach, ciasteczko zawierające identyfikator sesji(a w zasadzie
+id użytkownika)  jest secure. Sprawia to, że apka działa w Firefoxie któ©y jeszcze wysyłą ciasteczka secure do localhost(ale nie do 127.0.0.1).
+
+W chrome jednak nie działa dopóki się jakoś nie skonfiguruje HTTPS lub w inicjalizacji serwera w pliku main.rs nie zmieni
+
+```rust
+.secure(true)
+```
+
+na 
+
+```rust
+.secure(false)
+```
+
 ## Bezpieczeństwo 
 
-Ta aplikacja jest antywzorcem bezpieczeństwa i nie powinno się w żadnym przypadku na niej wzorować.
-Przechowywanie w ciasteczku numeru sesji oraz identyfikatora użytkownika podłączonego do sesji a w bazie używanie md5 jako hasha dla haseł to rozwiązanie
-zastosowane jedynie dlatego, że celem aplikacji nie było zapewnienie bezpiecznego przechowywania plików a jedynie umożliwienie
-równoległe ich edytowanie.
+Ta aplikacja(na razie) jest antwzorcem bezpieczeństwa, poniważ celem nie było zapewnienie bezpiecznej
+aplikacji a jedynie edytora umożliwiającego współpracę. 
+
+Naruszenia:
+- md5 użyte do hashowania haseł
+- numer sesji przechowywany w ciasteczku, które można zmienić na stronie klienta(co prawda nie przez js ale wciąż)
+- jeżeli w trakcie edycji projektu właściciel odbierze dostęp użytkownikowi edytującemu, nie zostanie on wylogowany. Będzie mógł
+edytować istniejące pliki ale nie będzie mógł usuwać i tworzyć nowych.
 
 
 
