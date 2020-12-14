@@ -48,7 +48,7 @@ impl IFileContentRepository for FileContentRepository {
 
     fn delete_line(&self, index: u32) {
         match get_client()
-            .execute("DELETE FROM files_lines WHERE file_id = $1 AND line_number = $2", &[&self.file_id, &index]){
+            .execute("DELETE FROM files_lines WHERE file_id = $1 AND line_number = $2", &[&self.file_id, &(index as i32)]){
             Ok(_) => info!("Deleted line {} in file {}", index, self.file_id ),
             Err(err) => {
                 error!("Error occurred while trying to delete line {} in file {}: {}", index, self.file_id, err);

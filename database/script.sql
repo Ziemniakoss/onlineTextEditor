@@ -202,7 +202,6 @@ BEGIN
 		  AND line_number > OLD.line_number
 		ORDER BY line_number
 		LOOP
-			INSERT INTO logg VALUES (_line_number::char);
 			UPDATE files_lines
 			SET line_number = (_line_number - 1)
 			WHERE line_number = _line_number

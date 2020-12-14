@@ -10,7 +10,7 @@ import FileChangesCache from "./FileChangesCache.js";
  *
  * @type {number}
  */
-const SENDING_TIME_INTERVAL_MS = 100
+const SENDING_TIME_INTERVAL_MS = 50
 
 const EDITOR_STATES = Object.freeze({
 	LOADING_PROJECT_STRUCTURE: 0,
