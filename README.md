@@ -2,16 +2,6 @@
 
 Edytor tekstu online umożliwiający współpracę wielu osób na raz nad folderem plików.
 
-## Aktualny etap
-
-Można utworzyć projekt z plikami, wczytać ich treść z sererwa i edytować je lokalnie ale na razie
-bez zapisu stałego zmian. Zmiany są rozsyłane między sesjami więc o ile wszsycy załadują
-plik przed rozpoczęciem edycji to zmiany powinny być wprowadzane wszsędzie takie same.
-
-Istnieje na razie problem z edycją tekstu w środku linii. Na razie można jedynie edytować 
-końcówkę linijek + dodawać nowe
-
-
 ## Uruchamianie
 
 ```bash
@@ -20,6 +10,7 @@ docker-compose up
 ```
 
 Można również na maszynach z python 3(python używany jedynie do otwarcia automatycznie strony):
+
 ```bash
 ./build-and-run.sh
 ```
@@ -27,7 +18,6 @@ Ten skrypt zawiera istrukcje wpisane powyżej + komendę do otwarcia przeglądar
 
 Może sie w tym przypadku zdarzyć, że przeglądarka spróbuje załadować strone przed postawieniem dockera. Rozwiązanie to
 po prostu przełądować stronę.
-
 
 ## Bezpieczeństwo 
 

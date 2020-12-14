@@ -493,11 +493,11 @@ impl Handler<editor_session::FileChange> for EditorServer {
 			change_id: self.rng.gen::<i32>(),
 			change: msg.lines.join("\n"),
 		};
-		self.apply_change(&msg);
 		self.sessions_2
 			.values()
 			.filter(|session| { return session.project_id == session_data.project_id; })
 			.for_each(|session| { session.recipient.do_send(change.clone()) });
+		self.apply_change(&msg);
 	}
 }
 
