@@ -36,13 +36,6 @@ CREATE TABLE files_lines
 	PRIMARY KEY (file_id, line_number)
 );
 
-/**
- * TODO Funkcje do:
- * - dodawania n nowych linii w dokumencie
- * - zapaisania wartości linijki w bazie danych
- * - pobieranie danych o dostępnych projetach(nazwa, id, nazwa użytkownika, opis)
- */
-
 CREATE OR REPLACE FUNCTION create_user(_username varchar, _password_plain varchar) RETURNS INT
 	language plpgsql AS
 $body$
@@ -144,6 +137,8 @@ $body$;
 CREATE OR REPLACE FUNCTION create_file(_project_id INT, _name CHAR) RETURNS INT
 	LANGUAGE plpgsql AS
 $body$
+DECLARE
+    _file_id INT;
 BEGIN
 	IF _name IS NULL OR length(_name) = 0 THEN
 		RETURN -1;
@@ -154,8 +149,8 @@ BEGIN
 	IF EXISTS(SELECT id FROM files WHERE project_id = _project_id AND name = _name) THEN
 		RETURN -3;
 	END IF;
-	INSERT INTO files (name, project_id) VALUES (_name, _project_id);
-	RETURN 0;
+	INSERT INTO files (name, project_id) VALUES (_name, _project_id) RETURNING id INTO _file_id;
+	RETURN _file_id;
 END;
 $body$;
 

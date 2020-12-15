@@ -258,7 +258,7 @@ export default class EditorController {
 	 */
 	_handleNewFilePackage(message) {
 		const indexOfFirstSpace = message.indexOf(" ");
-		const id = message.substring(0, indexOfFirstSpace);
+		const id = parseInt(message.substring(0, indexOfFirstSpace));
 		const name = message.substring(indexOfFirstSpace + 1);
 		this.files.push(new File(id, name))
 		this.files.sort(((a, b) => {
@@ -268,7 +268,6 @@ export default class EditorController {
 				return -1
 			}
 			return 0;
-
 		}))
 		this.view.showFilesList(this.files);
 	}
