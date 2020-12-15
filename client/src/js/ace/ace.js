@@ -7419,6 +7419,9 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 				: !Range.comparePoints(delta.start, delta.end)) {
 				return;
 			}
+			if(cancelChange){
+				console.trace("AA")
+			}
 
 			if (isInsert && delta.lines.length > 20000) {
 				this.$splitAndapplyLargeDelta(delta, 20000, cancelSignal);
@@ -7429,6 +7432,7 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 				delta.cancelSignal = cancelSignal;
 				this._signal("change", delta);
 			}
+
 		};
 
 		this.$safeApplyDelta = function (delta) {
@@ -13443,6 +13447,7 @@ define("ace/editor", ["require", "exports", "module", "ace/lib/fixoldbrowsers", 
 			var mode = session.getMode();
 			var cursor = this.getCursorPosition();
 
+
 			if (this.getBehavioursEnabled() && !pasted) {
 				var transform = mode.transformAction(session.getState(cursor.row), 'insertion', this, session, text);
 				if (transform) {
@@ -13483,20 +13488,21 @@ define("ace/editor", ["require", "exports", "module", "ace/lib/fixoldbrowsers", 
 			var line = session.getLine(cursor.row);
 			var shouldOutdent = mode.checkOutdent(lineState, line, text);
 			session.insert(cursor, text, false, true);
+			this.selection.setSelectionRange(new Range(cursor.row, cursor.column, cursor.row, cursor.column))
 
-			if (transform && transform.selection) {
-				if (transform.selection.length == 2) { // Transform relative to the current column
-					this.selection.setSelectionRange(
-						new Range(cursor.row, start + transform.selection[0],
-							cursor.row, start + transform.selection[1]));
-				} else { // Transform relative to the current row.
-					this.selection.setSelectionRange(
-						new Range(cursor.row + transform.selection[0],
-							transform.selection[1],
-							cursor.row + transform.selection[2],
-							transform.selection[3]));
-				}
-			}
+			// if (transform && transform.selection) {
+			// 	if (transform.selection.length == 2) { // Transform relative to the current column
+			// 		this.selection.setSelectionRange(
+			// 			new Range(cursor.row, start + transform.selection[0],
+			// 				cursor.row, start + transform.selection[1]));
+			// 	} else { // Transform relative to the current row.
+			// 		this.selection.setSelectionRange(
+			// 			new Range(cursor.row + transform.selection[0],
+			// 				transform.selection[1],
+			// 				cursor.row + transform.selection[2],
+			// 				transform.selection[3]));
+			// 	}
+			// }
 			if (this.$enableAutoIndent) {
 				if (session.getDocument().isNewLine(text)) {
 					var lineIndent = mode.getNextLineIndent(lineState, line.slice(0, cursor.column), session.getTabString());
