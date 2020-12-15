@@ -112,7 +112,6 @@ pub struct ChangeInFile {
 
 impl Default for EditorServer {
 	fn default() -> EditorServer {
-		println!("Creat");
 		EditorServer {
 			sessions_2: HashMap::new(),
 			rng: rand::thread_rng(),
@@ -191,10 +190,8 @@ impl EditorServer {
 
 	fn apply_deletion(&self, change: &FileChange) {
 		if change.start.row == change.end.row {
-			println!("SINGLE LINE DELTETION");
 			self.apply_single_line_deletion(change);
 		} else {
-			println!("MUTLI DELETE");
 			self.apply_multi_line_deletion(change);
 		}
 	}
@@ -238,15 +235,12 @@ impl EditorServer {
 					}
 					_ => {}
 				}
-				println!("Nowa pierwsza linia \"{}\"", new_first_line);
 				file_content_repository.update(change.start.row, new_first_line);
 			}
 			None => {}
 		}
 		let lines_to_delete = change.end.row - change.start.row + 1;
-		println!("DELTING FROM {} to {}, in total {}", change.start.row, change.end.row, lines_to_delete);
 		for _ in 0..lines_to_delete{
-			println!("Ból nie do zniesienia");
 			file_content_repository.delete_line(change.start.row + 1);
 		}
 	}
@@ -292,18 +286,15 @@ impl EditorServer {
 					.collect();
 
 				let new_row_value = format!("{}{}", prefix, change.lines[0]);
-				println!("Updating line {} to new value \"{}\"", change.start.row, new_row_value);
 				file_content_repository.update(change.start.row, new_row_value);
 			}
 			None => {
 				file_content_repository.insert_new_line(change.start.row, Some(change.lines[0].to_owned()));
-				println!("Insering new line index {}", change.start.row);
 			}
 		}
 		for i in 1..(change.lines.len() - 1) as u32 {
 			file_content_repository.insert_new_line(i + change.start.row, Some(change.lines[i as usize].clone()));
 		}
-		println!("SUFFIX {}", suffix_for_last_line);
 		let last_inserted_line = format!("{}{}", change.lines.last().unwrap(), suffix_for_last_line);
 		file_content_repository.insert_new_line(change.start.row + (change.lines.len() as u32) - 1, Some(last_inserted_line));
 	}
@@ -372,7 +363,7 @@ impl Handler<editor_session::Connect> for EditorServer {
 		};
 		if self.send_project_info(&msg.addr, &session_data) {
 			self.sessions_2.insert(id, session_data);
-			println!("New session with id {}, current sessions {}", id, self.sessions_2.len());
+			info!("New session with id {}, current sessions {}", id, self.sessions_2.len());
 		} else {}
 		id
 	}
@@ -475,7 +466,6 @@ impl Handler<editor_session::FileChange> for EditorServer {
 	type Result = ();
 
 	fn handle(&mut self, msg: editor_session::FileChange, _: &mut Context<Self>) {
-		println!("Server recived file change {:?}", msg);
 		let session_data;
 		match self.sessions_2.get(&msg.session_id) {
 			Some(data) => session_data = data,

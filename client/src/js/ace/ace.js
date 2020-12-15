@@ -7419,9 +7419,6 @@ define("ace/document", ["require", "exports", "module", "ace/lib/oop", "ace/appl
 				: !Range.comparePoints(delta.start, delta.end)) {
 				return;
 			}
-			if(cancelChange){
-				console.trace("AA")
-			}
 
 			if (isInsert && delta.lines.length > 20000) {
 				this.$splitAndapplyLargeDelta(delta, 20000, cancelSignal);
