@@ -84,7 +84,7 @@ export default class EditorController {
 		this.view = view;
 		this.projectsRepository = new ProjectRepository();
 		this.filesRepository = new FilesRepository();
-		let _ = this.init();
+		let  _ = this.init();
 	}
 
 	/**
@@ -208,10 +208,12 @@ export default class EditorController {
 		if (fileIdRangesAndChangeId.length !== 6) {
 			console.error("Could not extract changes position, id and file id from incoming change in file package");
 		}
-		let [fileId, startRow, startColumn, endRow, endColumn, changeId] = fileIdRangesAndChangeId.map((str) =>parseInt(str));
-		let startingIndexOfChangeContent = 6 + fileIdRangesAndChangeId.reduce((total, currentStr) => {return total + currentStr.length}, 0);
+		let [fileId, startRow, startColumn, endRow, endColumn, changeId] = fileIdRangesAndChangeId.map((str) => parseInt(str));
+		let startingIndexOfChangeContent = 6 + fileIdRangesAndChangeId.reduce((total, currentStr) => {
+			return total + currentStr.length
+		}, 0);
 		let changeContent = message.substring(startingIndexOfChangeContent);
-		if(this.openedFile == null || fileId !== this.openedFile.id){
+		if (this.openedFile == null || fileId !== this.openedFile.id) {
 			return;
 		}
 		this.lastAppliedChangeId = changeId;
@@ -229,6 +231,39 @@ export default class EditorController {
 		}
 		this.realFileContentSession = ace.createEditSession(message.substring(indexOfFirstSpace + 1));
 		this.view.showFileContent(this.realFileContentSession.getValue());
+		this.view.setEditorMode(this.getEditorMode(this.openedFile.name));
+	}
+
+	/**
+	 * Sets ace editor mode according to given file extension
+	 * @param {string} fileName
+	 * @return {string}
+	 */
+	getEditorMode(fileName) {
+		fileName = fileName.trim();
+		const lastDotPosition = fileName.lastIndexOf(".");
+		if(lastDotPosition === -1) {
+			console.log("NO extension")
+			const specialFileMode = specialFileNamesToExtensions[fileName];
+			return specialFileMode ? specialFileMode : "plain_text";
+		}
+		const fileExtension = fileName.substring(lastDotPosition + 1);
+		const modeForFileExtension = fileExtensionToEditorMode[fileExtension];
+		return modeForFileExtension  ? modeForFileExtension : "plain_text";
+	}
+
+	/**
+	 *
+	 * @param fileExtension
+	 * @return {string}
+	 */
+	getModeForExtension(fileExtension) {
+		console.log(`"${fileExtension}" is extension`)
+		if(fileExtension == "md"){
+			return "markdown";
+		} else{
+			return "plain_text";
+		}
 	}
 
 	_handleFileDeletedPackage(message) {
@@ -380,7 +415,7 @@ export default class EditorController {
 				row: fileChange.start.row,
 				column: fileChange.start.column
 			},
-			end: fileChange.action ==="remove" ? fileChange.end : fileChange.start,
+			end: fileChange.action === "remove" ? fileChange.end : fileChange.start,
 			lines: fileChange.action === "remove" ? [] : fileChange.lines,
 			lastChangeApplied: this.lastAppliedChangeId
 		}
@@ -395,4 +430,185 @@ export default class EditorController {
 	// 		this.webosocket = null
 	// 	}
 	// }
+}
+
+const fileExtensionToEditorMode = {
+// "abc.js": "",
+// "actionscript.js": "",
+// "ada.js": "",
+// "alda.js": "",
+// "apache_conf.js": "",
+	"cls": "apex",
+	"apex": "apex",
+	"applescript.js": "",
+// "aql.js": "",
+// "asciidoc.js": "",
+// "asl.js": "",
+	"s": "assembly_x86",
+	"autohotkey.js": "",
+// "batchfile.js": "",
+// "c9search.js": "",
+	"c": "c_cpp",
+	"cpp": "c_cpp",
+	"h": "c_cpp",
+// "cirru.js": "",
+// "clojure.js": "",
+// "cobol.js": "",
+// "coffee.js": "",
+// "coldfusion.js": "",
+// "crystal.js": "",
+	"cs": "csharp",
+// "csound_document.js": "",
+// "csound_orchestra.js": "",
+// "csound_score.js": "",
+// "csp.js": "",
+	"css": "css",
+// "curly.js": "",
+// "dart.js": "",
+// "diff.js": "",
+// "django.js": "",
+	"d": "d",
+// "dockerfile.js": "",
+// "dot.js": "",
+// "drools.js": "",
+// "edifact.js": "",
+// "eiffel.js": "",
+// "ejs.js": "",
+// "elixir.js": "",
+// "elm.js": "",
+// "erlang.js": "",
+// "forth.js": "",
+// "fortran.js": "",
+// "fsharp.js": "",
+// "fsl.js": "",
+// "ftl.js": "",
+// "gcode.js": "",
+// "gherkin.js": "",
+// "gitignore.js": "",
+// "glsl.js": "",
+// "gobstones.js": "",
+// "golang.js": "",
+// "graphqlschema.js": "",
+// "groovy.js": "",
+// "haml.js": "",
+// "handlebars.js": "",
+// "haskell_cabal.js": "",
+// "haskell.js": "",
+// "haxe.js": "",
+// "hjson.js": "",
+// "html_elixir.js": "",
+	"html": "html",
+	"htm": "html",
+// "html_ruby.js": "",
+// "ini.js": "",
+// "io.js": "",
+// "jack.js": "",
+// "jade.js": "",
+	"java": "java",
+	"js": "javascript",
+// "json5.js": "",
+// "jsoniq.js": "",
+	"json": "json",
+// "jsp.js": "",
+// "jssm.js": "",
+// "jsx.js": "",
+// "julia.js": "",
+	"kt": "kotlin",
+// "latex.js": "",
+// "less.js": "",
+// "liquid.js": "",
+// "lisp.js": "",
+// "livescript.js": "",
+// "logiql.js": "",
+// "logtalk.js": "",
+// "lsl.js": "",
+// "lua.js": "",
+// "luapage.js": "",
+// "lucene.js": "",
+// "makefile.js": "",
+	"md": "markdown",
+// "mask.js": "",
+	"m": "matlab",
+// "maze.js": "",
+// "mediawiki.js": "",
+// "mel.js": "",
+// "mixal.js": "",
+// "mushcode.js": "",
+// "mysql.js": "",
+// "nginx.js": "",
+	"nim": "nim",
+// "nix.js": "",
+// "nsis.js": "",
+// "nunjucks.js": "",
+// "objectivec.js": "",
+// "ocaml.js": "",
+// "pascal.js": "",
+// "perl6.js": "",
+// "perl.js": "",
+// "pgsql.js": "",
+	"php": "php",
+// "php_laravel_blade.js": "",
+// "pig.js": "",
+	"txt": "plain_text",
+// "powershell.js": "",
+// "praat.js": "",
+// "prisma.js": "",
+// "prolog.js": "",
+	"properties": "properties",
+// "protobuf.js": "",
+// "puppet.js": "",
+	"py": "python",
+// "qml.js": "",
+// "razor.js": "",
+// "rdoc.js": "",
+// "red.js": "",
+// "redshift.js": "",
+// "rhtml.js": "",
+// "r.js": "",
+// "rst.js": "",
+// "ruby.js": "",
+	"rs": "rust",
+	"sass": "sass",
+// "scad.js": "",
+// "scala.js": "",
+// "scheme.js": "",
+// "scss.js": "",
+	"sh": "sh",
+// "sjs.js": "",
+// "slim.js": "",
+// "smarty.js": "",
+// "snippets.js": "",
+// "soy_template.js": "",
+// "space.js": "",
+// "sparql.js": "",
+	"sql": "sql",
+// "sqlserver.js": "",
+// "stylus.js": "",
+	"svg": "svg",
+// "swift.js": "",
+// "tcl.js": "",
+// "terraform.js": "",
+// "tex.js": "",
+// "textile.js": "",
+// "text.js": "",
+// "toml.js": "",
+// "tsx.js": "",
+// "turtle.js": "",
+// "twig.js": "",
+	"ts": "typescript",
+// "vala.js": "",
+// "vbscript.js": "",
+// "velocity.js": "",
+// "verilog.js": "",
+// "vhdl.js": "",
+// "visualforce.js": "",
+// "wollok.js": "",
+	"xml": "xml",
+// "xquery.js": "",
+	"yaml": "yaml",
+// "zeek.js": "",
+}
+
+const specialFileNamesToExtensions ={
+
 }

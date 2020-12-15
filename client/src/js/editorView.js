@@ -176,6 +176,7 @@ export default class EditorView {
 		if (mode == null) {
 			mode = EditorModes.TEXT;
 		}
+		console.log("SETTING MODE TO " + mode);
 		this.editor.session.setMode(`ace/mode/${mode}`);
 
 	}
@@ -193,15 +194,4 @@ export default class EditorView {
 			editor.id = "editor-disabled";
 		}
 	}
-}
-
-
-/**
- * @typedef EditorMode
- * @enum {EditorMode}
- */
-export const EditorModes = {
-	TEXT: "text",
-	SH: "sh",
-
 }
