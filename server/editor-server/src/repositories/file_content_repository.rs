@@ -49,10 +49,10 @@ impl IFileContentRepository for FileContentRepository {
     fn delete_line(&self, index: u32) {
         match get_client()
             .execute("DELETE FROM files_lines WHERE file_id = $1 AND line_number = $2", &[&self.file_id, &(index as i32)]){
-            Ok(_) => info!("Deleted line {} in file {}", index, self.file_id ),
             Err(err) => {
                 error!("Error occurred while trying to delete line {} in file {}: {}", index, self.file_id, err);
-            }
+            },
+            _ => info
         }
     }
 
@@ -64,15 +64,15 @@ impl IFileContentRepository for FileContentRepository {
         match result_code {
             -1 => warn!("Someone tried to insert text in negative line"),
             -2 => error!("Someone tried to insert line in nonexisting file {}", self.file_id),
-            _ => info!("Inserted new line in file {} on index {} with content \"{}\"", self.file_id, index, content.unwrap_or("".to_owned()))
+            _ => { }
         }
     }
 
     fn update(&self, index: u32, content: String) {
         match get_client()
             .execute("UPDATE files_lines SET content = $1 WHERE file_id = $2 AND line_number = $3", &[&content, &self.file_id, &(index as i32)]){
-            Ok(_) => info!("Updated line {} in file {}", index, self.file_id),
-            Err(err) => error!("Failed to update line {} in line {}: {}", index, self.file_id, err)
+            Err(err) => error!("Failed to update line {} in line {}: {}", index, self.file_id, err),
+            _ => { }
         }
     }
 
